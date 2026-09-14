@@ -261,11 +261,20 @@ Populates **53** realistic points along Argwings Kodhek, Dennis Pritt, Ngong Roa
 
 ## Environment variables
 
+Templates: [`.env.example`](./.env.example) · [`apps/api/.env.example`](./apps/api/.env.example) · [`apps/web/.env.example`](./apps/web/.env.example) · [`apps/dashboard/.env.example`](./apps/dashboard/.env.example)
+
 | Variable | App | Description |
 | --- | --- | --- |
 | `DATABASE_URL` | API | Postgres connection string (PostGIS required) |
 | `PORT` | API | Defaults to `3001` |
-| `VITE_API_BASE` | web / dashboard | Optional absolute API origin; leave empty when using Vite proxy |
+| `CLUSTER_RADIUS_METERS` | API | Auto-verify radius (default `15`; tune in roadmap Wk 6) |
+| `CLUSTER_THRESHOLD` | API | Reports needed to verify (default `3`) |
+| `PHOTO_STORAGE_PATH` | API | Phase 1 photo upload directory |
+| `RATE_LIMIT_*` | API | Phase 1 spam protection window / max reports |
+| `LPDP_STORAGE_DIR` | API | Where Puppeteer writes the policy brief PDF |
+| `CORS_ORIGINS` | API | Allowed PWA + dashboard origins |
+| `VITE_API_BASE` | web / dashboard | Optional absolute API origin; empty = Vite proxy |
+| `VITE_H3_RESOLUTION` | web | Client H3 resolution (default `10`) |
 
 ---
 

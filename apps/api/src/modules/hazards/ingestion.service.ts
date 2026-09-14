@@ -1,15 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { Prisma } from "@prisma/client";
+import { env } from "../../lib/env.js";
 import { prisma } from "../../lib/prisma.js";
 import type {
   HazardReportInput,
   IngestionResult,
 } from "../../types/reports.js";
-
-/** Crowdsource verification threshold within the spatial radius. */
-const CLUSTER_THRESHOLD = 3;
-/** Metres — PostGIS geography ST_DWithin radius for same-category matches. */
-const CLUSTER_RADIUS_METERS = 15;
 
 const HAZARD_CATEGORIES = [
   "MOBILITY_SURFACE_DAMAGE",
@@ -27,9 +23,8 @@ interface NearbyRow {
 }
 
 /**
- * Ingest a geotagged hazard report, then run a 15 m same-category spatial
- * check. When ≥3 incidents fall in that radius, mark them verified and bind
- * them to a shared cluster_id anchored on the newly inserted incident.
+ * Ingest a geotagged hazard report, then run a same-category spatial check
+ * (radius / threshold from env — see CLUSTER_* in .env.example / roadmap Wk 6).
  */
 export async function ingestHazardReport(
   input: HazardReportInput,
@@ -71,14 +66,14 @@ export async function ingestHazardReport(
       AND ST_DWithin(
         location::geography,
         ST_SetSRID(ST_MakePoint(${input.lng}, ${input.lat}), 4326)::geography,
-        ${CLUSTER_RADIUS_METERS}
+        ${env.clusterRadiusMeters}
       )
   `;
 
   const nearbyCount = nearby.length;
   const nearbyIds = nearby.map((row) => row.id);
 
-  if (nearbyCount >= CLUSTER_THRESHOLD) {
+  if (nearbyCount >= env.clusterThreshold) {
     // Anchor cluster on the newly inserted incident; flip is_verified for all matches.
     const idList = Prisma.join(
       nearbyIds.map((id) => Prisma.sql`${id}::uuid`),

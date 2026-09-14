@@ -1,8 +1,11 @@
 import { createApp } from "./app.js";
+import { env } from "./lib/env.js";
 
-const port = Number(process.env.PORT ?? 3001);
 const app = createApp();
 
-app.listen(port, () => {
-  console.log(`UrbanMesh API listening on http://localhost:${port}`);
+app.listen(env.port, () => {
+  console.log(`UrbanMesh API listening on http://localhost:${env.port}`);
+  console.log(
+    `  clustering: ≥${env.clusterThreshold} reports within ${env.clusterRadiusMeters} m`,
+  );
 });
