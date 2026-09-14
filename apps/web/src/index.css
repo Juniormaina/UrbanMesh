@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(ellipse 120% 80% at 10% -10%, #d5ebe6 0%, transparent 55%),
+    radial-gradient(ellipse 90% 60% at 100% 0%, #e7eef2 0%, transparent 50%),
+    #f7fbfc;
+}
+
+/* Keep Leaflet controls readable in daylight */
+.leaflet-container {
+  font-family: "Nunito Sans", ui-sans-serif, sans-serif;
+  background: #e8f1f4;
+}
+
+.leaflet-control-attribution {
+  font-size: 10px;
+  background: rgba(247, 251, 252, 0.92) !important;
+}
