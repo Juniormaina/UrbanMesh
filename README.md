@@ -18,6 +18,8 @@ Kilimani’s streets carry recurring hazards — unlit corridors, broken sidewal
 
 Pilot corridors (see [`roadmap.md`](./roadmap.md)): **Argwings Kodhek Road** and the **Kirichwa Kubwa** river corridor.
 
+Living snapshot of what the code does today: **[`STATUS.md`](./STATUS.md)** (hackathon MVP — demo-ready, not a street pilot).
+
 ---
 
 ## Three workflows
@@ -61,6 +63,7 @@ UrbanMesh/
 │       │   ├── modules/dashboard/   # Ward / category metrics
 │       │   └── modules/reports/     # LPDP HTML → PDF
 │       └── storage/lpdp/            # Generated policy briefs
+├── STATUS.md                # What is shipped / stubbed / missing
 ├── roadmap.md               # 90-day pilot plan
 └── README.md
 ```
@@ -267,12 +270,12 @@ Templates: [`.env.example`](./.env.example) · [`apps/api/.env.example`](./apps/
 | --- | --- | --- |
 | `DATABASE_URL` | API | Postgres connection string (PostGIS required) |
 | `PORT` | API | Defaults to `3001` |
-| `CLUSTER_RADIUS_METERS` | API | Auto-verify radius (default `15`; tune in roadmap Wk 6) |
-| `CLUSTER_THRESHOLD` | API | Reports needed to verify (default `3`) |
-| `PHOTO_STORAGE_PATH` | API | Phase 1 photo upload directory |
-| `RATE_LIMIT_*` | API | Phase 1 spam protection window / max reports |
-| `LPDP_STORAGE_DIR` | API | Where Puppeteer writes the policy brief PDF |
-| `CORS_ORIGINS` | API | Allowed PWA + dashboard origins |
+| `CLUSTER_RADIUS_METERS` | API | Auto-verify radius (default `15`; **wired**; tune in roadmap Wk 6) |
+| `CLUSTER_THRESHOLD` | API | Reports needed to verify (default `3`; **wired**) |
+| `PHOTO_STORAGE_PATH` | API | Reserved for Phase 1 photo upload — **not wired yet** |
+| `RATE_LIMIT_*` | API | Reserved for Phase 1 spam protection — **not wired yet** |
+| `LPDP_STORAGE_DIR` | API | Documented output dir; generator currently writes `./storage/lpdp` |
+| `CORS_ORIGINS` | API | Reserved allowed origins — **not applied in Express yet** |
 | `VITE_API_BASE` | web / dashboard | Optional absolute API origin; empty = Vite proxy |
 | `VITE_H3_RESOLUTION` | web | Client H3 resolution (default `10`) |
 
@@ -282,7 +285,8 @@ Templates: [`.env.example`](./.env.example) · [`apps/api/.env.example`](./apps/
 
 The path from hackathon MVP to a supervised street pilot (KCF hosting, reporter cohort, county LPDP desk) is documented in:
 
-**[`roadmap.md`](./roadmap.md)** — Foundation (days 1–30) → Community pilot (31–60) → Validate & handover (61–90).
+- **[`STATUS.md`](./STATUS.md)** — what is live, stubbed, or missing right now  
+- **[`roadmap.md`](./roadmap.md)** — Foundation (days 1–30) → Community pilot (31–60) → Validate & handover (61–90)
 
 ---
 
