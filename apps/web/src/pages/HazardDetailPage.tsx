@@ -111,7 +111,7 @@ export function HazardDetailPage() {
 
   if (!data) {
     return (
-      <div className="lg:grid lg:min-h-full lg:grid-cols-2" aria-busy>
+      <div className="h-full lg:grid lg:grid-cols-2" aria-busy>
         <Skeleton className="h-48 w-full rounded-none lg:h-full" />
         <div className="px-4 py-6 lg:px-6">
           <Skeleton className="h-4 w-24" />
@@ -126,8 +126,8 @@ export function HazardDetailPage() {
   const photo = photoSrc(incident.photo_url);
 
   return (
-    <div className="pb-8 lg:grid lg:min-h-full lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)] lg:pb-0">
-      <div className="h-48 lg:h-auto lg:min-h-[28rem]">
+    <div className="h-full overflow-y-auto pb-8 lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(380px,0.85fr)] lg:overflow-hidden lg:pb-0">
+      <div className="h-48 lg:h-full lg:min-h-0">
         {photo ? (
           <img src={photo} alt="Hazard evidence photograph" className="h-full w-full object-cover" />
         ) : (

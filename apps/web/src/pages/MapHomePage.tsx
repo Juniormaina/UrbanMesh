@@ -89,7 +89,7 @@ export function MapHomePage() {
   );
 
   return (
-    <div className="absolute inset-0 lg:flex">
+    <div className="absolute inset-0 flex">
       <div className="relative min-h-0 min-w-0 flex-1">
         <div className={view === "list" ? "absolute inset-0 hidden lg:block" : "absolute inset-0"}>
           <LiveMap
@@ -118,18 +118,18 @@ export function MapHomePage() {
           </div>
         ) : null}
 
-        <div className="pointer-events-none absolute inset-x-0 top-3 z-10 px-3 lg:hidden">
+        <div className="pointer-events-none absolute inset-x-0 top-3 z-[1100] px-3 lg:hidden">
           <div className="pointer-events-auto">{filters}</div>
         </div>
 
         {error || locationError ? (
-          <div className="absolute inset-x-3 top-[9.5rem] z-10 space-y-2 lg:left-3 lg:right-auto lg:top-3 lg:w-[360px]">
+          <div className="absolute inset-x-3 top-[9.5rem] z-[1100] space-y-2 lg:left-3 lg:right-auto lg:top-3 lg:w-[360px]">
             {error ? <ErrorBanner message={error} /> : null}
             {locationError ? <ErrorBanner message={locationError} /> : null}
           </div>
         ) : null}
 
-        <div className="absolute bottom-5 left-3 z-10 max-w-[calc(100%-8.5rem)] lg:hidden">
+        <div className="absolute bottom-5 left-3 z-[1100] max-w-[calc(100%-8.5rem)] lg:hidden">
           <SummaryCard
             loading={loading && incidents.length === 0}
             verified={verified}
@@ -137,7 +137,7 @@ export function MapHomePage() {
           />
         </div>
 
-        <div className="absolute bottom-5 right-3 z-10 flex flex-col items-end gap-2 lg:bottom-6 lg:right-6">
+        <div className="absolute bottom-5 right-3 z-[1100] flex flex-col items-end gap-2 lg:bottom-6 lg:right-6">
           <button
             type="button"
             onClick={() => setView((v) => (v === "map" ? "list" : "map"))}

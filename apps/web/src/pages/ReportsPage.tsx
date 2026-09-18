@@ -181,7 +181,7 @@ export function ReportsPage() {
         <button
           type="button"
           onClick={requestLocation}
-          className="mt-3 w-full rounded-card border border-civic-line bg-civic-surface py-3 text-sm font-semibold"
+          className="mt-3 w-full rounded-card border border-civic-line bg-civic-surface py-3 text-sm font-semibold lg:w-auto lg:px-5"
         >
           Use my location
         </button>

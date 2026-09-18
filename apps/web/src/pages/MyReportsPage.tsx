@@ -98,7 +98,7 @@ export function MyReportsPage() {
           />
           <Link
             to="/report"
-            className="mt-3 block rounded-card bg-civic-accent py-3 text-center text-sm font-semibold text-white"
+            className="mt-3 inline-flex min-h-12 items-center justify-center rounded-card bg-civic-accent px-5 text-sm font-semibold text-white lg:min-w-[12rem]"
           >
             Report a hazard
           </Link>

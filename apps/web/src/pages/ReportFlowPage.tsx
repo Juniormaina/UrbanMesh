@@ -76,8 +76,9 @@ export function ReportFlowPage() {
   }
 
   return (
-    <div className="mx-auto flex h-full max-w-lg flex-col overflow-hidden bg-civic-paper">
-      <header className="flex items-center justify-between border-b border-civic-line bg-civic-surface px-4 py-2.5">
+    <div className="flex h-full w-full flex-col overflow-hidden bg-civic-paper">
+      <header className="shrink-0 border-b border-civic-line bg-civic-surface">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-2.5 lg:px-6">
         <button
           type="button"
           onClick={() => (step > 1 && !result ? setStep(step - 1) : navigate(-1))}
@@ -92,6 +93,7 @@ export function ReportFlowPage() {
             {result ? "Submitted" : `${step} / 4`}
           </span>
         </div>
+        </div>
       </header>
 
       {result ? (
@@ -99,8 +101,8 @@ export function ReportFlowPage() {
       ) : (
         <form className="flex min-h-0 flex-1 flex-col" onSubmit={onSubmit}>
           {step === 1 ? (
-            <section className="flex min-h-0 flex-1 flex-col">
-              <div className="px-4 py-4">
+            <section className="flex min-h-0 flex-1 flex-col lg:flex-row">
+              <div className="px-4 py-4 lg:hidden">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-civic-muted">
                   1 · Location
                 </p>
@@ -111,13 +113,14 @@ export function ReportFlowPage() {
                   Pan the map so the crosshair sits on the hazard.
                 </p>
               </div>
-              <div className="relative min-h-[320px] flex-1">
+              <div className="relative min-h-[280px] flex-1">
                 <div className="absolute inset-0">
                 <MapContainer
                   center={[center.lat, center.lng]}
                   zoom={17}
                   className="h-full w-full"
                   scrollWheelZoom
+                  zoomControl={false}
                 >
                   <TileLayer
                     key={dark ? "dark" : "light"}
@@ -128,11 +131,22 @@ export function ReportFlowPage() {
                   {coords ? <FlyTo lat={coords.lat} lng={coords.lng} /> : null}
                 </MapContainer>
                 </div>
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <div className="pointer-events-none absolute inset-0 z-[1100] flex items-center justify-center">
                   <div className="relative um-crosshair" />
                 </div>
               </div>
-              <div className="space-y-3 border-t border-civic-line bg-civic-surface px-4 py-4">
+              <div className="space-y-3 border-t border-civic-line bg-civic-surface px-4 py-4 lg:w-[380px] lg:shrink-0 lg:overflow-y-auto lg:border-l lg:border-t-0 lg:px-5 lg:py-6">
+                <div className="hidden lg:block">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-civic-muted">
+                    1 · Location
+                  </p>
+                  <h1 className="mt-1 text-xl font-semibold tracking-tight">
+                    Where is the problem?
+                  </h1>
+                  <p className="mt-1 text-sm text-civic-muted">
+                    Pan the map so the crosshair sits on the hazard.
+                  </p>
+                </div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-civic-muted">
                   Selected location
                 </p>
@@ -167,14 +181,14 @@ export function ReportFlowPage() {
           ) : null}
 
           {step === 2 ? (
-            <section className="flex-1 overflow-y-auto px-4 py-4">
+            <section className="mx-auto w-full max-w-4xl flex-1 overflow-y-auto px-4 py-4 lg:px-6 lg:py-8">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-civic-muted">
                 2 · Hazard
               </p>
               <h1 className="mt-1 text-xl font-semibold tracking-tight">
                 What is the problem?
               </h1>
-              <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-3">
                 {HAZARD_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
@@ -207,7 +221,7 @@ export function ReportFlowPage() {
           ) : null}
 
           {step === 3 ? (
-            <section className="flex-1 overflow-y-auto px-4 py-4">
+            <section className="mx-auto w-full max-w-5xl flex-1 overflow-y-auto px-4 py-4 lg:px-6 lg:py-8">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-civic-muted">
                 3 · Evidence
               </p>
@@ -215,46 +229,52 @@ export function ReportFlowPage() {
               <p className="mt-1 text-sm text-civic-muted">
                 Photograph the hazard now. Gallery uploads are not accepted.
               </p>
-              <label className="mt-4 block text-sm font-semibold">Photo</label>
-              <div className="mt-2">
-                <CameraCapture
-                  photoData={photoData}
-                  onCapture={setPhotoData}
-                  onRetake={() => setPhotoData(null)}
-                />
+              <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+                <div>
+                  <label className="block text-sm font-semibold">Photo</label>
+                  <div className="mt-2">
+                    <CameraCapture
+                      photoData={photoData}
+                      onCapture={setPhotoData}
+                      onRetake={() => setPhotoData(null)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold" htmlFor="desc">
+                    Short description
+                  </label>
+                  <textarea
+                    id="desc"
+                    rows={8}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="e.g. Open manhole on Argwings Kodhek pedestrian verge, no barrier."
+                    className="mt-2 w-full rounded-card border border-civic-line bg-civic-surface px-3 py-3 text-sm outline-none focus:border-civic-accent"
+                  />
+                  <p className="mt-3 text-xs font-medium text-civic-muted">
+                    Detected location · {formatCoords(center.lat, center.lng)}
+                  </p>
+                  <button
+                    type="button"
+                    disabled={!description.trim() || !photoData}
+                    onClick={() => setStep(4)}
+                    className="mt-5 w-full rounded-card bg-civic-accent py-3 text-sm font-semibold text-white disabled:opacity-50"
+                  >
+                    Review
+                  </button>
+                </div>
               </div>
-              <label className="mt-5 block text-sm font-semibold" htmlFor="desc">
-                Short description
-              </label>
-              <textarea
-                id="desc"
-                rows={4}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="e.g. Open manhole on Argwings Kodhek pedestrian verge, no barrier."
-                className="mt-2 w-full rounded-card border border-civic-line bg-civic-surface px-3 py-3 text-sm outline-none focus:border-civic-accent"
-              />
-              <p className="mt-3 text-xs font-medium text-civic-muted">
-                Detected location · {formatCoords(center.lat, center.lng)}
-              </p>
-              <button
-                type="button"
-                disabled={!description.trim() || !photoData}
-                onClick={() => setStep(4)}
-                className="mt-5 w-full rounded-card bg-civic-accent py-3 text-sm font-semibold text-white disabled:opacity-50"
-              >
-                Review
-              </button>
             </section>
           ) : null}
 
           {step === 4 ? (
-            <section className="flex-1 overflow-y-auto px-4 py-4">
+            <section className="mx-auto w-full max-w-4xl flex-1 overflow-y-auto px-4 py-4 lg:px-6 lg:py-8">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-civic-muted">
                 4 · Review
               </p>
               <h1 className="mt-1 text-xl font-semibold tracking-tight">Review and submit</h1>
-              <dl className="mt-4 space-y-3 rounded-card border border-civic-line bg-civic-surface p-4 text-sm">
+              <dl className="mt-4 grid gap-4 rounded-card border border-civic-line bg-civic-surface p-4 text-sm lg:grid-cols-2">
                 <div>
                   <dt className="text-xs font-semibold uppercase tracking-wide text-civic-muted">
                     Location
@@ -273,7 +293,7 @@ export function ReportFlowPage() {
                   </dt>
                   <dd className="mt-1 font-medium">{description}</dd>
                 </div>
-                <div>
+                <div className="lg:row-span-3">
                   <dt className="text-xs font-semibold uppercase tracking-wide text-civic-muted">
                     Photo
                   </dt>
@@ -282,7 +302,7 @@ export function ReportFlowPage() {
                       <img
                         src={photoData}
                         alt="Captured hazard evidence"
-                        className="max-h-40 w-full rounded-card object-cover"
+                        className="max-h-40 w-full rounded-card object-cover lg:max-h-72"
                       />
                     ) : (
                       <span className="font-medium">Not taken</span>
@@ -331,7 +351,7 @@ function FlyTo({ lat, lng }: { lat: number; lng: number }) {
 function ResultState({ result }: { result: ReportResponse }) {
   const verified = result.is_verified;
   return (
-    <div className="um-enter flex flex-1 flex-col px-5 py-10">
+    <div className="um-enter mx-auto flex w-full max-w-lg flex-1 flex-col px-5 py-10 lg:max-w-xl lg:justify-center">
       <p className="text-xs font-semibold uppercase tracking-wide text-civic-muted">
         5 · Submission
       </p>

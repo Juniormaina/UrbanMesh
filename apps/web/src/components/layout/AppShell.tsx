@@ -13,7 +13,7 @@ const NAV = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
-  const scrollable = pathname !== "/";
+  const fullBleed = pathname === "/" || pathname.startsWith("/hazards/");
   const online = useOnline();
 
   return (
@@ -29,7 +29,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <TopBar />
       <main
         className={`relative min-h-0 flex-1 ${
-          scrollable ? "overflow-y-auto" : "overflow-hidden"
+          fullBleed ? "overflow-hidden" : "overflow-y-auto"
         }`}
       >
         {children}
