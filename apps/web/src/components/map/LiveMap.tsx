@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Circle,
   CircleMarker,
@@ -108,9 +108,21 @@ export function LiveMap({
   const { dark } = useTheme();
   const tiles = tilesFor(dark);
   const mapRef = useRef<L.Map | null>(null);
+  const [mapObj, setMapObj] = useState<L.Map | null>(null);
   const features = useMemo(() => splitMapFeatures(incidents), [incidents]);
   const flyTarget = focus ?? (locateNonce ? user : null);
   const flyNonce = (focus ? 1000 : 0) + locateNonce;
+
+  useEffect(() => {
+    if (!mapObj) return;
+    const el = mapObj.getContainer();
+    const ro = new ResizeObserver(() => {
+      mapObj.invalidateSize({ animate: false });
+    });
+    ro.observe(el);
+    mapObj.invalidateSize({ animate: false });
+    return () => ro.disconnect();
+  }, [mapObj]);
 
   return (
     <div className={`absolute inset-0 ${className}`}>
@@ -123,6 +135,7 @@ export function LiveMap({
         zoomControl={false}
         ref={(map) => {
           mapRef.current = map ?? null;
+          setMapObj(map ?? null);
         }}
       >
         <TileLayer
@@ -251,7 +264,7 @@ export function LiveMap({
           </>
         ) : null}
       </MapContainer>
-      <div className="absolute right-3 top-[42%] z-[500] flex flex-col overflow-hidden rounded-card border border-civic-line bg-civic-surface shadow-card">
+      <div className="absolute right-3 top-[42%] z-[500] flex flex-col overflow-hidden rounded-card border border-civic-line bg-civic-surface shadow-card lg:bottom-28 lg:right-6 lg:top-auto">
         <button
           type="button"
           aria-label="Zoom in"

@@ -18,7 +18,7 @@ import {
   type IncidentPublic,
   type SpatialCluster,
 } from "../lib/api";
-import { Panel } from "../components/ui/Primitives";
+import { Panel, Skeleton } from "../components/ui/Primitives";
 import { useChartColors } from "../lib/theme";
 
 export function AnalyticsPage() {
@@ -109,7 +109,16 @@ export function AnalyticsPage() {
   }, [filteredIncidents]);
 
   if (!metrics) {
-    return <p className="p-6 text-sm text-civic-muted">Loading analytics…</p>;
+    return (
+      <div className="p-6 lg:p-7" aria-busy>
+        <Skeleton className="h-7 w-40" />
+        <Skeleton className="mt-3 h-4 w-80" />
+        <div className="mt-6 grid gap-5 lg:grid-cols-2">
+          <Skeleton className="h-64" />
+          <Skeleton className="h-64" />
+        </div>
+      </div>
+    );
   }
 
   const ratio =

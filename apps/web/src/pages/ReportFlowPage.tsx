@@ -30,7 +30,7 @@ import { tilesFor } from "../lib/mapStyle";
 
 export function ReportFlowPage() {
   const navigate = useNavigate();
-  const { coords, requestLocation, locating } = useLocationState();
+  const { coords, requestLocation, locating, error: locationError } = useLocationState();
   const { dark } = useTheme();
   const tiles = tilesFor(dark);
   const [step, setStep] = useState(1);
@@ -88,8 +88,8 @@ export function ReportFlowPage() {
         <UrbanMeshLogo compact />
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <span className="text-xs font-semibold text-civic-muted">
-            {result ? "Done" : `${step} / 4`}
+          <span className="text-xs font-semibold tabular-nums text-civic-muted">
+            {result ? "Submitted" : `${step} / 4`}
           </span>
         </div>
       </header>
@@ -101,7 +101,10 @@ export function ReportFlowPage() {
           {step === 1 ? (
             <section className="flex min-h-0 flex-1 flex-col">
               <div className="px-4 py-4">
-                <h1 className="text-xl font-semibold tracking-tight">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-civic-muted">
+                  1 · Location
+                </p>
+                <h1 className="mt-1 text-xl font-semibold tracking-tight">
                   Where is the problem?
                 </h1>
                 <p className="mt-1 text-sm text-civic-muted">
@@ -130,23 +133,32 @@ export function ReportFlowPage() {
                 </div>
               </div>
               <div className="space-y-3 border-t border-civic-line bg-civic-surface px-4 py-4">
-                <p className="font-mono text-xs text-civic-muted">
+                <p className="text-xs font-semibold uppercase tracking-wide text-civic-muted">
+                  Selected location
+                </p>
+                <p className="font-mono text-xs text-civic-slate">
                   {formatCoords(center.lat, center.lng)}
                 </p>
+                {locating ? (
+                  <p className="text-sm text-civic-muted">Reading GPS…</p>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => {
                     requestLocation();
                     if (coords) setCenter(coords);
                   }}
-                  className="w-full rounded-card border border-civic-line py-3 text-sm font-semibold"
+                  className="w-full min-h-12 rounded-card border border-civic-line py-3 text-sm font-semibold"
                 >
                   {locating ? "Locating…" : "Use my location"}
                 </button>
+                {locationError ? (
+                  <p className="text-sm font-semibold text-civic-critical">{locationError}</p>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="w-full rounded-card bg-civic-accent py-3 text-sm font-semibold text-white"
+                  className="w-full min-h-12 rounded-card bg-civic-accent py-3 text-sm font-semibold text-white"
                 >
                   Confirm location
                 </button>
@@ -156,7 +168,10 @@ export function ReportFlowPage() {
 
           {step === 2 ? (
             <section className="flex-1 overflow-y-auto px-4 py-4">
-              <h1 className="text-xl font-semibold tracking-tight">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-civic-muted">
+                2 · Hazard
+              </p>
+              <h1 className="mt-1 text-xl font-semibold tracking-tight">
                 What is the problem?
               </h1>
               <div className="mt-4 grid grid-cols-2 gap-3">
@@ -165,7 +180,7 @@ export function ReportFlowPage() {
                     key={opt.value}
                     type="button"
                     onClick={() => setCategory(opt.value)}
-                    className={`rounded-card border p-4 text-left ${
+                    className={`min-h-[7.5rem] rounded-card border p-4 text-left ${
                       category === opt.value
                         ? "border-civic-ink bg-civic-mist"
                         : "border-civic-line bg-civic-surface"
@@ -193,7 +208,10 @@ export function ReportFlowPage() {
 
           {step === 3 ? (
             <section className="flex-1 overflow-y-auto px-4 py-4">
-              <h1 className="text-xl font-semibold tracking-tight">Add evidence</h1>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-civic-muted">
+                3 · Evidence
+              </p>
+              <h1 className="mt-1 text-xl font-semibold tracking-tight">Add evidence</h1>
               <p className="mt-1 text-sm text-civic-muted">
                 Photograph the hazard now. Gallery uploads are not accepted.
               </p>
@@ -232,7 +250,10 @@ export function ReportFlowPage() {
 
           {step === 4 ? (
             <section className="flex-1 overflow-y-auto px-4 py-4">
-              <h1 className="text-xl font-semibold tracking-tight">Review and submit</h1>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-civic-muted">
+                4 · Review
+              </p>
+              <h1 className="mt-1 text-xl font-semibold tracking-tight">Review and submit</h1>
               <dl className="mt-4 space-y-3 rounded-card border border-civic-line bg-civic-surface p-4 text-sm">
                 <div>
                   <dt className="text-xs font-semibold uppercase tracking-wide text-civic-muted">
@@ -310,21 +331,21 @@ function FlyTo({ lat, lng }: { lat: number; lng: number }) {
 function ResultState({ result }: { result: ReportResponse }) {
   const verified = result.is_verified;
   return (
-    <div className="flex flex-1 flex-col px-5 py-10">
+    <div className="um-enter flex flex-1 flex-col px-5 py-10">
       <p className="text-xs font-semibold uppercase tracking-wide text-civic-muted">
-        {verified ? "Verified cluster" : "Pending confirmation"}
+        5 · Submission
       </p>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight">
         {verified ? "Community verified" : "Report logged"}
       </h1>
-      <p className="mt-3 text-base text-civic-slate">
+      <p className="mt-3 text-base leading-relaxed text-civic-slate">
         {verified
           ? `${Math.max(result.nearby_count, 3)} nearby reports confirm this hazard.`
-          : "We're waiting for nearby reports to confirm this hazard."}
+          : "Waiting for nearby reports to confirm this hazard."}
       </p>
-      <p className="mt-6 text-sm text-civic-muted">
-        Individual reports become structured spatial evidence once three same-category
-        sightings fall within 15 metres.
+      <p className="mt-6 text-sm leading-relaxed text-civic-muted">
+        This is {verified ? "a verified spatial cluster" : "an individual report"}.
+        Three same-category sightings within 15 metres become planning evidence.
       </p>
       <Link
         to={`/hazards/${result.incident_id}`}

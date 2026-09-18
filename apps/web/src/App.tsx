@@ -7,6 +7,7 @@ import { ReportsPage } from "./pages/ReportsPage";
 import { MyReportsPage } from "./pages/MyReportsPage";
 import { HazardDetailPage } from "./pages/HazardDetailPage";
 import { ReportFlowPage } from "./pages/ReportFlowPage";
+import { AboutPage } from "./pages/AboutPage";
 
 export default function App() {
   return (
@@ -44,6 +45,14 @@ export default function App() {
             element={
               <AppShell>
                 <HazardDetailPage />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/about"
+            element={
+              <AppShell>
+                <AboutPage />
               </AppShell>
             }
           />

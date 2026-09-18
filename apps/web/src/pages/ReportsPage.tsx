@@ -9,6 +9,7 @@ import { haversineMeters } from "../lib/geo";
 import { useLocationState } from "../lib/location";
 import { EmptyState, ErrorBanner, ReportCard } from "../components/ui/ReportCard";
 import { Link } from "react-router-dom";
+import { PipelineStrip, SkeletonList } from "../components/ui/Pipeline";
 
 type Tab = "nearby" | "recent" | "verified";
 
@@ -89,17 +90,20 @@ export function ReportsPage() {
   }, [items, category, status, date, tab, coords, distance]);
 
   return (
-    <div className="px-4 py-4 pb-8">
+    <div className="mx-auto w-full max-w-[1100px] px-4 py-4 pb-8 lg:px-6 lg:py-6">
       <div className="mb-4 flex items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Reports</h1>
-          <p className="text-sm text-civic-muted">
+          <h1 className="text-xl font-semibold tracking-tight lg:text-2xl">Reports</h1>
+          <p className="mt-1 text-sm text-civic-muted">
             Nearby evidence across Kilimani.
           </p>
+          <div className="mt-2">
+            <PipelineStrip compact />
+          </div>
         </div>
         <Link
           to="/report"
-          className="rounded-card bg-civic-accent px-3 py-2 text-xs font-semibold text-white"
+          className="rounded-card bg-civic-accent px-3 py-2 text-xs font-semibold text-white lg:min-h-11 lg:px-4 lg:text-sm"
         >
           + Report
         </Link>
@@ -120,7 +124,7 @@ export function ReportsPage() {
         ))}
       </div>
 
-      <div className="mb-4 flex gap-2 overflow-x-auto">
+      <div className="mb-4 flex gap-2 overflow-x-auto lg:flex-wrap">
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
@@ -184,9 +188,7 @@ export function ReportsPage() {
       ) : null}
 
       {error ? <ErrorBanner message={error} /> : null}
-      {loading ? (
-        <p className="text-sm font-medium text-civic-muted">Loading reports…</p>
-      ) : null}
+      {loading ? <SkeletonList rows={4} /> : null}
 
       {!loading && filtered.length === 0 && (tab !== "nearby" || coords) ? (
         <EmptyState
@@ -195,7 +197,7 @@ export function ReportsPage() {
         />
       ) : null}
 
-      <div className="space-y-3">
+      <div className="grid gap-3 lg:grid-cols-2">
         {filtered.map((incident) => (
           <ReportCard key={incident.id} incident={incident} />
         ))}

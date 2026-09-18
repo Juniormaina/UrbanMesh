@@ -16,6 +16,7 @@ import { rememberMyReport } from "../lib/myReports";
 import { formatRelative, formatWhen, formatCoords } from "../lib/format";
 import { CategoryIcon, StatusBadge } from "../components/ui/StatusBadge";
 import { ErrorBanner } from "../components/ui/ReportCard";
+import { Skeleton } from "../components/ui/Pipeline";
 import { useTheme } from "../lib/theme";
 import { MARKER, tilesFor } from "../lib/mapStyle";
 
@@ -99,7 +100,7 @@ export function HazardDetailPage() {
 
   if (error) {
     return (
-      <div className="px-4 py-6">
+      <div className="mx-auto max-w-[1100px] px-4 py-6 lg:px-6">
         <ErrorBanner message={error} />
         <Link to="/" className="mt-3 inline-block text-sm font-semibold text-civic-accent">
           Back to map
@@ -109,17 +110,26 @@ export function HazardDetailPage() {
   }
 
   if (!data) {
-    return <p className="px-4 py-6 text-sm font-medium text-civic-muted">Loading evidence…</p>;
+    return (
+      <div className="lg:grid lg:min-h-full lg:grid-cols-2" aria-busy>
+        <Skeleton className="h-48 w-full rounded-none lg:h-full" />
+        <div className="px-4 py-6 lg:px-6">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="mt-2 h-7 w-3/4" />
+          <Skeleton className="mt-4 h-12 w-full" />
+        </div>
+      </div>
+    );
   }
 
   const { incident } = data;
   const photo = photoSrc(incident.photo_url);
 
   return (
-    <div className="pb-8">
-      <div className="h-48">
+    <div className="pb-8 lg:grid lg:min-h-full lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)] lg:pb-0">
+      <div className="h-48 lg:h-auto lg:min-h-[28rem]">
         {photo ? (
-          <img src={photo} alt="" className="h-full w-full object-cover" />
+          <img src={photo} alt="Hazard evidence photograph" className="h-full w-full object-cover" />
         ) : (
           <MapContainer
             center={[incident.lat, incident.lng]}
@@ -147,9 +157,10 @@ export function HazardDetailPage() {
         )}
       </div>
 
-      <div className="px-4 pt-4">
+      <div className="px-4 pt-4 lg:overflow-y-auto lg:border-l lg:border-civic-line lg:bg-civic-surface lg:px-6 lg:py-6">
         <p className="text-xs font-semibold uppercase tracking-wide text-civic-muted">
           {incident.category_label}
+          {incident.is_verified ? " · Verified cluster" : " · Individual report"}
         </p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
           {incident.description.split(/[.!?]/)[0]}
@@ -157,8 +168,10 @@ export function HazardDetailPage() {
         <div className="mt-3">
           <StatusBadge verified={incident.is_verified} />
         </div>
-        <p className="mt-3 text-sm text-civic-slate">
-          {incident.nearby_count} reports · 15m cluster
+        <p className="mt-3 text-sm leading-relaxed text-civic-slate">
+          {incident.is_verified
+            ? `${incident.nearby_count} nearby reports confirm this hazard within a 15 m cluster.`
+            : "Waiting for nearby reports to confirm this hazard."}
         </p>
         <p className="text-sm font-medium text-civic-ink">{incident.corridor}</p>
         <p className="text-sm text-civic-muted">
@@ -171,14 +184,14 @@ export function HazardDetailPage() {
             type="button"
             onClick={() => void onConfirm()}
             disabled={confirming}
-            className="flex-1 rounded-card bg-civic-accent py-3 text-sm font-semibold text-white disabled:opacity-60"
+            className="flex-1 min-h-12 rounded-card bg-civic-accent py-3 text-sm font-semibold text-white disabled:opacity-60"
           >
             {confirming ? "Confirming…" : "I'm seeing this too"}
           </button>
           <button
             type="button"
             onClick={() => void onShare()}
-            className="rounded-card border border-civic-line px-4 py-3 text-sm font-semibold"
+            className="min-h-12 rounded-card border border-civic-line px-4 py-3 text-sm font-semibold"
           >
             Share
           </button>

@@ -145,7 +145,7 @@ export function LiveMapPage() {
         </div>
       </div>
 
-      <aside className="w-full max-w-sm overflow-y-auto border-l border-civic-line bg-civic-surface p-5">
+      <aside className="um-enter w-full max-w-sm overflow-y-auto border-l border-civic-line bg-civic-surface p-5">
         {selected ? (
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-civic-verified">

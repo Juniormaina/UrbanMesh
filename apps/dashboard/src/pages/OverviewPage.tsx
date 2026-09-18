@@ -22,7 +22,7 @@ import {
   type SpatialCluster,
 } from "../lib/api";
 import { MONTH_LABEL } from "../lib/format";
-import { Panel, StatCard, StatusBadge } from "../components/ui/Primitives";
+import { Panel, PipelineStrip, Skeleton, StatCard, StatusBadge } from "../components/ui/Primitives";
 import { DEFAULT_LAYERS, PlannerMap } from "../components/map/PlannerMap";
 import { useChartColors } from "../lib/theme";
 
@@ -56,7 +56,18 @@ export function OverviewPage() {
     return <p className="p-6 text-sm font-semibold text-civic-critical">{error}</p>;
   }
   if (!metrics) {
-    return <p className="p-6 text-sm text-civic-muted">Loading Kilimani evidence…</p>;
+    return (
+      <div className="p-6 lg:p-7" aria-busy>
+        <Skeleton className="h-4 w-48" />
+        <Skeleton className="mt-3 h-8 w-80" />
+        <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -68,25 +79,14 @@ export function OverviewPage() {
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
           Kilimani walkability intelligence
         </h1>
-        <p className="mt-2 max-w-2xl text-sm text-civic-slate">
-          Citizen reports become nearby evidence, then verified spatial clusters,
-          then LPDP planning inputs. This console reads the live Kilimani dataset.
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-civic-slate">
+          Residents report what they see. UrbanMesh verifies spatial patterns.
+          Planners receive structured evidence for the Kilimani LPDP.
         </p>
+        <div className="mt-4">
+          <PipelineStrip />
+        </div>
       </header>
-
-      <ol className="mb-6 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-wide text-civic-muted">
-        {[
-          "Citizen report",
-          "Nearby reports",
-          "Verified cluster",
-          "Walkability intelligence",
-          "County planning evidence",
-        ].map((step, i) => (
-          <li key={step} className="rounded-full bg-civic-mist px-3 py-1 text-civic-slate">
-            {i + 1}. {step}
-          </li>
-        ))}
-      </ol>
 
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Total reports" value={metrics.totals.all} />

@@ -37,7 +37,7 @@ export function PlannerShell() {
             </select>
           </label>
         </div>
-        <nav className="flex flex-1 flex-col gap-0.5 p-3">
+        <nav aria-label="County console" className="flex flex-1 flex-col gap-0.5 p-3">
           {NAV.map((item) => (
             <NavLink
               key={item.to}

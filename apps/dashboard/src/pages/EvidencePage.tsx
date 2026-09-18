@@ -68,7 +68,10 @@ export function EvidencePage() {
           <h1 className="text-2xl font-semibold tracking-tight">
             Kilimani LPDP Evidence
           </h1>
-          <p className="mt-1 text-sm text-civic-muted">{MONTH_LABEL}</p>
+          <p className="mt-1 max-w-xl text-sm leading-relaxed text-civic-muted">
+            {MONTH_LABEL}. The policy brief is compiled only from verified 15 m
+            clusters — not from pending individual reports.
+          </p>
         </div>
         <button
           type="button"
@@ -119,6 +122,12 @@ export function EvidencePage() {
       ) : null}
 
       <div className="space-y-6">
+        {clusters.length === 0 ? (
+          <p className="rounded-card border border-dashed border-civic-line bg-civic-surface px-4 py-8 text-center text-sm text-civic-muted">
+            No verified clusters yet. Individual reports become LPDP evidence only after
+            three same-category sightings within 15 metres.
+          </p>
+        ) : null}
         {grouped.map(([corridor, rows]) => (
           <section key={corridor}>
             <h2 className="mb-3 text-sm font-semibold">{corridor}</h2>
@@ -133,6 +142,7 @@ export function EvidencePage() {
                     className="mt-1"
                     checked={selected.includes(cluster.cluster_id)}
                     onChange={() => toggle(cluster.cluster_id)}
+                    aria-label={`Include ${cluster.category_label} on ${cluster.corridor} in the LPDP brief`}
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">

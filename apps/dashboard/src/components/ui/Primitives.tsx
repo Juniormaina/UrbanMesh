@@ -27,6 +27,33 @@ export function StatCard({
   );
 }
 
+export function PipelineStrip() {
+  const steps = [
+    "Report",
+    "Nearby reports",
+    "Verified cluster",
+    "Urban intelligence",
+    "LPDP evidence",
+  ];
+  return (
+    <ol
+      className="flex flex-wrap gap-y-1 text-[11px] font-semibold uppercase tracking-wide text-civic-muted"
+      aria-label="Evidence pipeline"
+    >
+      {steps.map((step, i) => (
+        <li key={step} className="inline-flex items-center">
+          {i > 0 ? <span className="mx-1.5 text-civic-line" aria-hidden>→</span> : null}
+          <span className="text-civic-slate">{step}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+export function Skeleton({ className = "" }: { className?: string }) {
+  return <div className={`um-skeleton ${className}`} />;
+}
+
 export function Panel({
   title,
   hint,
@@ -37,9 +64,11 @@ export function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-card border border-civic-line bg-civic-surface p-4 shadow-card">
-      <h2 className="text-sm font-semibold">{title}</h2>
-      {hint ? <p className="mb-3 mt-1 text-xs text-civic-muted">{hint}</p> : null}
+    <section className="rounded-card border border-civic-line bg-civic-surface p-5 shadow-card">
+      <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
+      {hint ? (
+        <p className="mb-4 mt-1 text-xs leading-relaxed text-civic-muted">{hint}</p>
+      ) : null}
       {children}
     </section>
   );

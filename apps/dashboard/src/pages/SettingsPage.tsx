@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchMeta, type PlatformMeta } from "../lib/api";
+import { Skeleton } from "../components/ui/Primitives";
 
 export function SettingsPage() {
   const [meta, setMeta] = useState<PlatformMeta | null>(null);
@@ -9,7 +10,13 @@ export function SettingsPage() {
   }, []);
 
   if (!meta) {
-    return <p className="p-6 text-sm text-civic-muted">Loading platform settings…</p>;
+    return (
+      <div className="p-6 lg:p-7" aria-busy>
+        <Skeleton className="h-7 w-40" />
+        <Skeleton className="mt-3 h-4 w-72" />
+        <Skeleton className="mt-6 h-64 w-full max-w-xl" />
+      </div>
+    );
   }
 
   return (

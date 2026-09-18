@@ -4,6 +4,7 @@ import { loadMyReportIds } from "../lib/myReports";
 import { formatWhen } from "../lib/format";
 import { EmptyState, ErrorBanner, ReportCard } from "../components/ui/ReportCard";
 import { Link } from "react-router-dom";
+import { PipelineStrip, SkeletonList } from "../components/ui/Pipeline";
 
 export function MyReportsPage() {
   const [items, setItems] = useState<IncidentPublic[]>([]);
@@ -61,11 +62,14 @@ export function MyReportsPage() {
   );
 
   return (
-    <div className="px-4 py-4 pb-8">
-      <h1 className="text-xl font-semibold tracking-tight">My reports</h1>
-      <p className="mt-1 text-sm text-civic-muted">
+    <div className="mx-auto w-full max-w-[1100px] px-4 py-4 pb-8 lg:px-6 lg:py-6">
+      <h1 className="text-xl font-semibold tracking-tight lg:text-2xl">My reports</h1>
+      <p className="mt-1 text-sm leading-relaxed text-civic-muted">
         Stored on this device. No public profile — just the hazards you logged in Kilimani.
       </p>
+      <div className="mt-3">
+        <PipelineStrip compact />
+      </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
         <Stat label="Submitted" value={items.length} />
@@ -81,7 +85,9 @@ export function MyReportsPage() {
 
       {error ? <div className="mt-4"><ErrorBanner message={error} /></div> : null}
       {loading ? (
-        <p className="mt-4 text-sm font-medium text-civic-muted">Loading your reports…</p>
+        <div className="mt-4">
+          <SkeletonList rows={3} />
+        </div>
       ) : null}
 
       {!loading && items.length === 0 ? (
@@ -102,7 +108,7 @@ export function MyReportsPage() {
       {history.length > 0 ? (
         <section className="mt-6">
           <h2 className="mb-2 text-sm font-semibold text-civic-ink">Report history</h2>
-          <div className="space-y-3">
+          <div className="grid gap-3 lg:grid-cols-2">
             {history.map((incident) => (
               <ReportCard
                 key={incident.id}
@@ -123,7 +129,7 @@ export function MyReportsPage() {
       {verified.length > 0 ? (
         <section className="mt-6">
           <h2 className="mb-2 text-sm font-semibold text-civic-ink">Verified clusters</h2>
-          <div className="space-y-3">
+          <div className="grid gap-3 lg:grid-cols-2">
             {verified.map((incident) => (
               <ReportCard key={`v-${incident.id}`} incident={incident} />
             ))}
@@ -134,7 +140,7 @@ export function MyReportsPage() {
       {pending.length > 0 ? (
         <section className="mt-6">
           <h2 className="mb-2 text-sm font-semibold text-civic-ink">Pending verification</h2>
-          <div className="space-y-3">
+          <div className="grid gap-3 lg:grid-cols-2">
             {pending.map((incident) => (
               <ReportCard key={`p-${incident.id}`} incident={incident} />
             ))}
