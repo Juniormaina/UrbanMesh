@@ -1,0 +1,210 @@
+import { useEffect, useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import {
+  CircleMarker,
+  MapContainer,
+  TileLayer,
+} from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import {
+  confirmHazard,
+  fetchEvidence,
+  photoSrc,
+  type EvidenceResponse,
+} from "../lib/api";
+import { rememberMyReport } from "../lib/myReports";
+import { formatRelative, formatWhen, formatCoords } from "../lib/format";
+import { CategoryIcon, StatusBadge } from "../components/ui/StatusBadge";
+import { ErrorBanner } from "../components/ui/ReportCard";
+
+export function HazardDetailPage() {
+  const { id = "" } = useParams();
+  const [data, setData] = useState<EvidenceResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const evidence = await fetchEvidence(id);
+        if (!cancelled) setData(evidence);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Report not found.");
+        }
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const timeline = useMemo(() => {
+    if (!data) return [];
+    const rows =
+      data.cluster_members.length > 0
+        ? data.cluster_members
+        : [data.incident, ...data.nearby];
+    const seen = new Set<string>();
+    return rows
+      .filter((row) => {
+        if (seen.has(row.id)) return false;
+        seen.add(row.id);
+        return true;
+      })
+      .sort((a, b) => a.created_at.localeCompare(b.created_at));
+  }, [data]);
+
+  async function onConfirm() {
+    setConfirming(true);
+    setConfirmMessage(null);
+    try {
+      const result = await confirmHazard(id);
+      rememberMyReport(result.incident_id);
+      setConfirmMessage(
+        result.is_verified
+          ? "Community verified — your confirmation completed this 15 m cluster."
+          : "Confirmation logged. Nearby reports are still needed.",
+      );
+      setData(await fetchEvidence(id));
+    } catch (err) {
+      setConfirmMessage(
+        err instanceof Error ? err.message : "Could not add your confirmation.",
+      );
+    } finally {
+      setConfirming(false);
+    }
+  }
+
+  async function onShare() {
+    const url = window.location.href;
+    if (navigator.share) {
+      await navigator.share({
+        title: data?.incident.category_label ?? "UrbanMesh hazard",
+        text: data?.incident.description,
+        url,
+      });
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    setConfirmMessage("Link copied.");
+  }
+
+  if (error) {
+    return (
+      <div className="px-4 py-6">
+        <ErrorBanner message={error} />
+        <Link to="/" className="mt-3 inline-block text-sm font-semibold text-civic-accent">
+          Back to map
+        </Link>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return <p className="px-4 py-6 text-sm font-medium text-civic-muted">Loading evidence…</p>;
+  }
+
+  const { incident } = data;
+  const photo = photoSrc(incident.photo_url);
+
+  return (
+    <div className="pb-8">
+      <div className="h-48">
+        {photo ? (
+          <img src={photo} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <MapContainer
+            center={[incident.lat, incident.lng]}
+            zoom={17}
+            scrollWheelZoom={false}
+            zoomControl={false}
+            className="h-full w-full"
+          >
+            <TileLayer
+              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+              attribution="&copy; OSM &copy; CARTO"
+            />
+            <CircleMarker
+              center={[incident.lat, incident.lng]}
+              radius={10}
+              pathOptions={{
+                color: "#16181D",
+                fillColor: incident.is_verified ? "#2F6B5A" : "#A67C2A",
+                fillOpacity: 0.9,
+              }}
+            />
+          </MapContainer>
+        )}
+      </div>
+
+      <div className="px-4 pt-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-civic-muted">
+          {incident.category_label}
+        </p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+          {incident.description.split(/[.!?]/)[0]}
+        </h1>
+        <div className="mt-3">
+          <StatusBadge verified={incident.is_verified} />
+        </div>
+        <p className="mt-3 text-sm text-civic-slate">
+          {incident.nearby_count} reports · 15m cluster
+        </p>
+        <p className="text-sm font-medium text-civic-ink">{incident.corridor}</p>
+        <p className="text-sm text-civic-muted">
+          {incident.ward_name} · {formatCoords(incident.lat, incident.lng)}
+        </p>
+        <p className="mt-1 text-xs text-civic-muted">{formatWhen(incident.created_at)}</p>
+
+        <div className="mt-5 flex gap-2">
+          <button
+            type="button"
+            onClick={() => void onConfirm()}
+            disabled={confirming}
+            className="flex-1 rounded-card bg-civic-accent py-3 text-sm font-semibold text-white disabled:opacity-60"
+          >
+            {confirming ? "Confirming…" : "I'm seeing this too"}
+          </button>
+          <button
+            type="button"
+            onClick={() => void onShare()}
+            className="rounded-card border border-civic-line px-4 py-3 text-sm font-semibold"
+          >
+            Share
+          </button>
+        </div>
+        {confirmMessage ? (
+          <p className="mt-3 text-sm font-medium text-civic-accentDark">{confirmMessage}</p>
+        ) : null}
+
+        <section className="mt-8">
+          <h2 className="text-sm font-semibold">Community evidence</h2>
+          <p className="mt-1 text-xs text-civic-muted">
+            Timeline of nearby same-category reports, not a social feed.
+          </p>
+          <ol className="mt-4 space-y-0 border-l border-civic-line pl-4">
+            {timeline.map((row, index) => (
+              <li key={row.id} className="relative pb-5">
+                <span className="absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full bg-civic-accent" />
+                <div className="flex items-start gap-2">
+                  <CategoryIcon category={row.category} className="mt-0.5 h-4 w-4 text-civic-slate" />
+                  <div>
+                    <p className="text-sm font-medium text-civic-ink">{row.description}</p>
+                    <p className="mt-0.5 text-xs text-civic-muted">
+                      {index === 0 ? "First reported" : "Nearby confirmation"} ·{" "}
+                      {formatRelative(row.created_at)} · {row.corridor}
+                    </p>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      </div>
+    </div>
+  );
+}
