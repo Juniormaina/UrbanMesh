@@ -23,8 +23,10 @@ import {
 import { MONTH_LABEL } from "../lib/format";
 import { Panel, StatCard } from "../components/ui/Primitives";
 import { DEFAULT_LAYERS, PlannerMap } from "../components/map/PlannerMap";
+import { useChartColors } from "../lib/theme";
 
 export function OverviewPage() {
+  const chart = useChartColors();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [incidents, setIncidents] = useState<IncidentPublic[]>([]);
   const [clusters, setClusters] = useState<SpatialCluster[]>([]);
@@ -110,16 +112,16 @@ export function OverviewPage() {
                   layout="vertical"
                   margin={{ left: 8, right: 12 }}
                 >
-                  <CartesianGrid stroke="#DDD6CC" horizontal={false} />
-                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
+                  <CartesianGrid stroke={chart.line} horizontal={false} />
+                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: chart.muted }} />
                   <YAxis
                     type="category"
                     dataKey="label"
                     width={118}
-                    tick={{ fontSize: 11 }}
+                    tick={{ fontSize: 11, fill: chart.muted }}
                   />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#2F6B5A" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="count" fill={chart.accent} radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -132,13 +134,13 @@ export function OverviewPage() {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={metrics.trend}>
-                <CartesianGrid stroke="#DDD6CC" />
-                <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                <CartesianGrid stroke={chart.line} />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: chart.muted }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: chart.muted }} />
                 <Tooltip />
-                <Line dataKey="total" name="Total" stroke="#16181D" strokeWidth={2} dot={false} />
-                <Line dataKey="verified" name="Verified" stroke="#2F6B5A" strokeWidth={2} dot={false} />
-                <Line dataKey="unverified" name="Pending" stroke="#A67C2A" strokeWidth={2} dot={false} />
+                <Line dataKey="total" name="Total" stroke={chart.ink} strokeWidth={2} dot={false} />
+                <Line dataKey="verified" name="Verified" stroke={chart.accent} strokeWidth={2} dot={false} />
+                <Line dataKey="unverified" name="Pending" stroke={chart.pending} strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -147,12 +149,12 @@ export function OverviewPage() {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={metrics.by_ward} margin={{ bottom: 36 }}>
-                <CartesianGrid stroke="#DDD6CC" />
-                <XAxis dataKey="ward_name" tick={{ fontSize: 10 }} interval={0} angle={-24} textAnchor="end" />
-                <YAxis allowDecimals={false} />
+                <CartesianGrid stroke={chart.line} />
+                <XAxis dataKey="ward_name" tick={{ fontSize: 10, fill: chart.muted }} interval={0} angle={-24} textAnchor="end" />
+                <YAxis allowDecimals={false} tick={{ fill: chart.muted }} />
                 <Tooltip />
-                <Bar dataKey="verified" name="Verified" stackId="a" fill="#2F6B5A" />
-                <Bar dataKey="unverified" name="Pending" stackId="a" fill="#A67C2A" />
+                <Bar dataKey="verified" name="Verified" stackId="a" fill={chart.accent} />
+                <Bar dataKey="unverified" name="Pending" stackId="a" fill={chart.pending} />
               </BarChart>
             </ResponsiveContainer>
           </div>

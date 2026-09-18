@@ -54,8 +54,15 @@ export function createApp() {
   app.use(
     (err: unknown, _req: Request, res: Response, _next: NextFunction) => {
       console.error(err);
-      res.status(500).json({
-        error: "Something went wrong on the UrbanMesh API.",
+      const message = err instanceof Error ? err.message : "";
+      const dbMissing =
+        message.includes("DATABASE_URL") ||
+        message.includes("Can't reach database") ||
+        message.includes("P1001");
+      res.status(dbMissing ? 503 : 500).json({
+        error: dbMissing
+          ? "UrbanMesh cannot reach PostgreSQL. Start Postgres with PostGIS, then in apps/api run npx prisma migrate dev and npm run db:seed."
+          : "Something went wrong on the UrbanMesh API.",
       });
     },
   );

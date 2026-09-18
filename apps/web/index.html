@@ -21,7 +21,14 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <title>UrbanMesh · Kilimani</title>
+    <script>
+      try {
+        if (localStorage.getItem("urbanmesh.colorScheme") === "dark") {
+          document.documentElement.classList.add("dark");
+          document.documentElement.style.colorScheme = "dark";
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body class="bg-civic-paper text-civic-ink antialiased">
     <div id="root"></div>

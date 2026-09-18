@@ -17,8 +17,10 @@ import {
   type SpatialCluster,
 } from "../lib/api";
 import { Panel } from "../components/ui/Primitives";
+import { useChartColors } from "../lib/theme";
 
 export function AnalyticsPage() {
+  const chart = useChartColors();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [clusters, setClusters] = useState<SpatialCluster[]>([]);
 
@@ -64,12 +66,12 @@ export function AnalyticsPage() {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={metrics.trend}>
-                <CartesianGrid stroke="#DDD6CC" />
-                <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                <YAxis allowDecimals={false} />
+                <CartesianGrid stroke={chart.line} />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: chart.muted }} />
+                <YAxis allowDecimals={false} tick={{ fill: chart.muted }} />
                 <Tooltip />
-                <Line dataKey="total" stroke="#16181D" strokeWidth={2} dot={false} />
-                <Line dataKey="verified" stroke="#2F6B5A" strokeWidth={2} dot={false} />
+                <Line dataKey="total" stroke={chart.ink} strokeWidth={2} dot={false} />
+                <Line dataKey="verified" stroke={chart.accent} strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -78,11 +80,11 @@ export function AnalyticsPage() {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={metrics.by_category} layout="vertical">
-                <CartesianGrid stroke="#DDD6CC" horizontal={false} />
-                <XAxis type="number" allowDecimals={false} />
-                <YAxis type="category" dataKey="label" width={120} tick={{ fontSize: 11 }} />
+                <CartesianGrid stroke={chart.line} horizontal={false} />
+                <XAxis type="number" allowDecimals={false} tick={{ fill: chart.muted }} />
+                <YAxis type="category" dataKey="label" width={120} tick={{ fontSize: 11, fill: chart.muted }} />
                 <Tooltip />
-                <Bar dataKey="count" fill="#2F6B5A" />
+                <Bar dataKey="count" fill={chart.accent} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -91,11 +93,11 @@ export function AnalyticsPage() {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={metrics.by_ward}>
-                <CartesianGrid stroke="#DDD6CC" />
-                <XAxis dataKey="ward_name" tick={{ fontSize: 10 }} interval={0} angle={-20} textAnchor="end" height={56} />
-                <YAxis allowDecimals={false} />
+                <CartesianGrid stroke={chart.line} />
+                <XAxis dataKey="ward_name" tick={{ fontSize: 10, fill: chart.muted }} interval={0} angle={-20} textAnchor="end" height={56} />
+                <YAxis allowDecimals={false} tick={{ fill: chart.muted }} />
                 <Tooltip />
-                <Bar dataKey="total" fill="#3F4A52" />
+                <Bar dataKey="total" fill={chart.ink} />
               </BarChart>
             </ResponsiveContainer>
           </div>

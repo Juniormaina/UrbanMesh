@@ -16,9 +16,13 @@ import { rememberMyReport } from "../lib/myReports";
 import { formatRelative, formatWhen, formatCoords } from "../lib/format";
 import { CategoryIcon, StatusBadge } from "../components/ui/StatusBadge";
 import { ErrorBanner } from "../components/ui/ReportCard";
+import { useTheme } from "../lib/theme";
+import { MARKER, tilesFor } from "../lib/mapStyle";
 
 export function HazardDetailPage() {
   const { id = "" } = useParams();
+  const { dark } = useTheme();
+  const tiles = tilesFor(dark);
   const [data, setData] = useState<EvidenceResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
@@ -125,16 +129,18 @@ export function HazardDetailPage() {
             className="h-full w-full"
           >
             <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-              attribution="&copy; OSM &copy; CARTO"
+              key={dark ? "dark" : "light"}
+              url={tiles.url}
+              attribution={tiles.attribution}
             />
             <CircleMarker
               center={[incident.lat, incident.lng]}
               radius={10}
               pathOptions={{
-                color: "#16181D",
-                fillColor: incident.is_verified ? "#2F6B5A" : "#A67C2A",
-                fillOpacity: 0.9,
+                color: dark ? "#EEE9E1" : "#FFFFFF",
+                weight: 2,
+                fillColor: incident.is_verified ? MARKER.verified : MARKER.pending,
+                fillOpacity: 0.95,
               }}
             />
           </MapContainer>

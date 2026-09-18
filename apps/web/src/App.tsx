@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { LocationProvider } from "./lib/location";
+import { ThemeProvider } from "./lib/theme";
 import { AppShell } from "./components/layout/AppShell";
 import { MapHomePage } from "./pages/MapHomePage";
 import { ReportsPage } from "./pages/ReportsPage";
@@ -9,6 +10,7 @@ import { ReportFlowPage } from "./pages/ReportFlowPage";
 
 export default function App() {
   return (
+    <ThemeProvider>
     <LocationProvider>
       <BrowserRouter>
         <Routes>
@@ -49,5 +51,6 @@ export default function App() {
         </Routes>
       </BrowserRouter>
     </LocationProvider>
+    </ThemeProvider>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import {
+  Circle,
   CircleMarker,
   MapContainer,
   Polygon,
@@ -18,6 +19,8 @@ import type {
   PlatformMeta,
   SpatialCluster,
 } from "../../lib/api";
+import { useTheme } from "../../lib/theme";
+import { HEAT_DARK, HEAT_LIGHT, MARKER, tilesFor } from "../../lib/mapStyle";
 
 const KILIMANI: [number, number] = [-1.2921, 36.785];
 
@@ -31,32 +34,42 @@ export interface MapLayers {
   h3: boolean;
 }
 
-function HeatLayer({ points }: { points: IncidentPublic[] }) {
+function HeatLayer({
+  points,
+  dark,
+}: {
+  points: IncidentPublic[];
+  dark: boolean;
+}) {
   const map = useMap();
   const heatData = useMemo(
     () =>
       points
         .filter((p) => p.is_verified)
-        .map((p) => [p.lat, p.lng, 0.55] as [number, number, number]),
+        .map(
+          (p) =>
+            [p.lat, p.lng, p.severity === "critical" ? 0.85 : 0.5] as [
+              number,
+              number,
+              number,
+            ],
+        ),
     [points],
   );
   useEffect(() => {
     if (heatData.length === 0) return;
     const layer = L.heatLayer(heatData, {
-      radius: 28,
-      blur: 22,
+      radius: 24,
+      blur: 20,
       maxZoom: 17,
-      gradient: {
-        0.2: "#c5d4c8",
-        0.5: "#d7c48a",
-        0.8: "#a63d2f",
-      },
+      minOpacity: dark ? 0.26 : 0.16,
+      gradient: dark ? HEAT_DARK : HEAT_LIGHT,
     });
     layer.addTo(map);
     return () => {
       map.removeLayer(layer);
     };
-  }, [map, heatData]);
+  }, [map, heatData, dark]);
   return null;
 }
 
@@ -75,6 +88,12 @@ export function PlannerMap({
   selectedId?: string | null;
   onSelectCluster?: (cluster: SpatialCluster) => void;
 }) {
+  const { dark } = useTheme();
+  const tiles = tilesFor(dark);
+  const ring = dark ? "#EEE9E1" : "#FFFFFF";
+  const roadColor = dark ? "#C5C1B8" : "#16181D";
+  const wardColor = dark ? "#8F968E" : "#3F4A52";
+
   const h3Cells = useMemo(() => {
     const unique = [...new Set(incidents.map((i) => i.h3_index).filter(Boolean))];
     return unique.map((cell) => ({
@@ -88,6 +107,7 @@ export function PlannerMap({
   );
   const drainage = meta?.corridors.filter((c) => c.id === "kirichwa-kubwa");
   const pedestrian = meta?.corridors.filter((c) => c.id === "dennis-pritt");
+  const selected = clusters.find((c) => c.cluster_id === selectedId);
 
   return (
     <MapContainer
@@ -97,10 +117,11 @@ export function PlannerMap({
       scrollWheelZoom
     >
       <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        attribution="&copy; OSM &copy; CARTO"
+        key={dark ? "dark" : "light"}
+        url={tiles.url}
+        attribution={tiles.attribution}
       />
-      {layers.verified ? <HeatLayer points={incidents} /> : null}
+      {layers.verified ? <HeatLayer points={incidents} dark={dark} /> : null}
 
       {layers.wards &&
         meta?.wards.map((ward) => {
@@ -113,9 +134,10 @@ export function PlannerMap({
                 [maxLat, maxLng],
               ]}
               pathOptions={{
-                color: "#3F4A52",
+                color: wardColor,
                 weight: 1,
-                fillOpacity: 0.04,
+                dashArray: "4 6",
+                fillOpacity: dark ? 0.06 : 0.04,
               }}
             >
               <Popup>{ward.name}</Popup>
@@ -128,7 +150,7 @@ export function PlannerMap({
           <Polyline
             key={c.id}
             positions={c.path}
-            pathOptions={{ color: "#16181D", weight: 3, opacity: 0.55 }}
+            pathOptions={{ color: roadColor, weight: 3, opacity: 0.55 }}
           />
         ))}
       {layers.drainage &&
@@ -136,7 +158,7 @@ export function PlannerMap({
           <Polyline
             key={c.id}
             positions={c.path}
-            pathOptions={{ color: "#3F4A52", weight: 3, dashArray: "6 6" }}
+            pathOptions={{ color: wardColor, weight: 3, dashArray: "6 6" }}
           />
         ))}
       {layers.pedestrian &&
@@ -144,7 +166,7 @@ export function PlannerMap({
           <Polyline
             key={c.id}
             positions={c.path}
-            pathOptions={{ color: "#2F6B5A", weight: 3 }}
+            pathOptions={{ color: MARKER.verified, weight: 3 }}
           />
         ))}
 
@@ -154,10 +176,10 @@ export function PlannerMap({
             key={cell.cell}
             positions={cell.path}
             pathOptions={{
-              color: "#2F6B5A",
+              color: MARKER.verified,
               weight: 1,
-              fillColor: "#2F6B5A",
-              fillOpacity: 0.06,
+              fillColor: MARKER.verified,
+              fillOpacity: dark ? 0.1 : 0.06,
             }}
           />
         ))}
@@ -171,10 +193,11 @@ export function PlannerMap({
               center={[inc.lat, inc.lng]}
               radius={5}
               pathOptions={{
-                color: "#16181D",
-                weight: 1,
-                fillColor: "#A67C2A",
-                fillOpacity: 0.9,
+                color: ring,
+                weight: 1.5,
+                fillColor: MARKER.pending,
+                fillOpacity: 0.85,
+                dashArray: "3 3",
               }}
             >
               <Popup>
@@ -185,21 +208,34 @@ export function PlannerMap({
             </CircleMarker>
           ))}
 
+      {selected ? (
+        <Circle
+          center={[selected.lat, selected.lng]}
+          radius={selected.radius_meters}
+          pathOptions={{
+            color: MARKER.verified,
+            weight: 1.5,
+            fillColor: MARKER.verified,
+            fillOpacity: 0.08,
+          }}
+        />
+      ) : null}
+
       {layers.verified &&
         clusters.map((cluster) => (
           <CircleMarker
             key={cluster.cluster_id}
             center={[cluster.lat, cluster.lng]}
-            radius={selectedId === cluster.cluster_id ? 14 : 10}
+            radius={selectedId === cluster.cluster_id ? 13 : 9}
             eventHandlers={{
               click: () => onSelectCluster?.(cluster),
             }}
             pathOptions={{
-              color: "#16181D",
-              weight: 1,
+              color: ring,
+              weight: 2,
               fillColor:
-                cluster.severity === "critical" ? "#A63D2F" : "#2F6B5A",
-              fillOpacity: 0.92,
+                cluster.severity === "critical" ? MARKER.critical : MARKER.verified,
+              fillOpacity: 0.95,
             }}
           />
         ))}

@@ -1,3 +1,5 @@
+import "./loadEnv.js";
+
 /**
  * Runtime config aligned with roadmap.md:
  * - Wk 1–2: photo storage + rate limiting (pilot hardening)

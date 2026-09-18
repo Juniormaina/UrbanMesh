@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
+import { ThemeToggle } from "../../lib/theme";
 
 const NAV = [
   { to: "/", label: "Overview" },
@@ -39,13 +40,17 @@ export function PlannerShell() {
             </NavLink>
           ))}
         </nav>
-        <p className="px-5 py-4 text-[11px] text-civic-muted">
-          Nairobi City County · LPDP desk
-        </p>
+        <div className="flex items-center justify-between px-5 py-4">
+          <p className="text-[11px] text-civic-muted">
+            Nairobi City County · LPDP desk
+          </p>
+          <ThemeToggle />
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex gap-2 overflow-x-auto border-b border-civic-line bg-civic-surface px-3 py-2 lg:hidden">
+        <div className="flex items-center gap-2 overflow-x-auto border-b border-civic-line bg-civic-surface px-3 py-2 lg:hidden">
+          <ThemeToggle />
           {NAV.map((item) => (
             <NavLink
               key={item.to}
@@ -53,7 +58,7 @@ export function PlannerShell() {
               end={item.to === "/"}
               className={({ isActive }) =>
                 `shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${
-                  isActive ? "bg-civic-ink text-white" : "bg-civic-mist text-civic-slate"
+                  isActive ? "bg-civic-ink text-civic-paper" : "bg-civic-mist text-civic-slate"
                 }`
               }
             >

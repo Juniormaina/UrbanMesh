@@ -36,6 +36,9 @@ Thumbs.db
 *.swp
 *.swo
 
+# Local user-space Postgres data (dev only)
+.pgdata/
+
 # Logs
 *.log
 npm-debug.log*

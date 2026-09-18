@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { UrbanMeshLogo } from "../ui/UrbanMeshLogo";
 import { useLocationState } from "../../lib/location";
+import { ThemeToggle } from "../../lib/theme";
 import { useState, type ReactNode } from "react";
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -36,6 +37,7 @@ function TopBar() {
         >
           {locating ? "Locating…" : coords ? "Located" : "Location"}
         </button>
+        <ThemeToggle />
         <button
           type="button"
           aria-label="Menu"

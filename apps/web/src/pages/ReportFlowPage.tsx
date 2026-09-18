@@ -18,23 +18,27 @@ import {
   type HazardCategoryValue,
 } from "../lib/categories";
 import { CategoryIcon } from "../components/ui/StatusBadge";
+import { CameraCapture } from "../components/report/CameraCapture";
 import { KILIMANI_CENTER } from "../components/map/LiveMap";
-import { fileToDataUrl, formatCoords } from "../lib/format";
+import { formatCoords } from "../lib/format";
 import { rememberMyReport } from "../lib/myReports";
 import { useLocationState } from "../lib/location";
 import { UrbanMeshLogo } from "../components/ui/UrbanMeshLogo";
 import { ErrorBanner } from "../components/ui/ReportCard";
+import { ThemeToggle, useTheme } from "../lib/theme";
+import { tilesFor } from "../lib/mapStyle";
 
 export function ReportFlowPage() {
   const navigate = useNavigate();
   const { coords, requestLocation, locating } = useLocationState();
+  const { dark } = useTheme();
+  const tiles = tilesFor(dark);
   const [step, setStep] = useState(1);
   const [center, setCenter] = useState(
     coords ?? { lat: KILIMANI_CENTER[0], lng: KILIMANI_CENTER[1] },
   );
   const [category, setCategory] = useState<HazardCategoryValue | "">("");
   const [description, setDescription] = useState("");
-  const [photoName, setPhotoName] = useState<string | null>(null);
   const [photoData, setPhotoData] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,12 +49,6 @@ export function ReportFlowPage() {
   useEffect(() => {
     if (coords) setCenter(coords);
   }, [coords]);
-
-  async function onPhoto(file: File | undefined) {
-    if (!file) return;
-    setPhotoName(file.name);
-    setPhotoData(await fileToDataUrl(file));
-  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -88,9 +86,12 @@ export function ReportFlowPage() {
           Back
         </button>
         <UrbanMeshLogo compact />
-        <span className="text-xs font-semibold text-civic-muted">
-          {result ? "Done" : `${step} / 4`}
-        </span>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <span className="text-xs font-semibold text-civic-muted">
+            {result ? "Done" : `${step} / 4`}
+          </span>
+        </div>
       </header>
 
       {result ? (
@@ -116,8 +117,9 @@ export function ReportFlowPage() {
                   scrollWheelZoom
                 >
                   <TileLayer
-                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                    attribution="&copy; OSM &copy; CARTO"
+                    key={dark ? "dark" : "light"}
+                    url={tiles.url}
+                    attribution={tiles.attribution}
                   />
                   <MoveTracker onMove={setCenter} />
                   {coords ? <FlyTo lat={coords.lat} lng={coords.lng} /> : null}
@@ -192,20 +194,17 @@ export function ReportFlowPage() {
           {step === 3 ? (
             <section className="flex-1 overflow-y-auto px-4 py-4">
               <h1 className="text-xl font-semibold tracking-tight">Add evidence</h1>
+              <p className="mt-1 text-sm text-civic-muted">
+                Photograph the hazard now. Gallery uploads are not accepted.
+              </p>
               <label className="mt-4 block text-sm font-semibold">Photo</label>
-              <label className="mt-2 flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-card border border-dashed border-civic-line bg-civic-surface px-4 text-sm text-civic-muted">
-                {photoName ?? "Take or choose a photo"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  className="hidden"
-                  onChange={(e) => void onPhoto(e.target.files?.[0])}
+              <div className="mt-2">
+                <CameraCapture
+                  photoData={photoData}
+                  onCapture={setPhotoData}
+                  onRetake={() => setPhotoData(null)}
                 />
-              </label>
-              {photoData ? (
-                <img src={photoData} alt="" className="mt-3 max-h-40 w-full rounded-card object-cover" />
-              ) : null}
+              </div>
               <label className="mt-5 block text-sm font-semibold" htmlFor="desc">
                 Short description
               </label>
@@ -222,7 +221,7 @@ export function ReportFlowPage() {
               </p>
               <button
                 type="button"
-                disabled={!description.trim()}
+                disabled={!description.trim() || !photoData}
                 onClick={() => setStep(4)}
                 className="mt-5 w-full rounded-card bg-civic-accent py-3 text-sm font-semibold text-white disabled:opacity-50"
               >
@@ -257,7 +256,17 @@ export function ReportFlowPage() {
                   <dt className="text-xs font-semibold uppercase tracking-wide text-civic-muted">
                     Photo
                   </dt>
-                  <dd className="mt-1 font-medium">{photoName ?? "None attached"}</dd>
+                  <dd className="mt-1">
+                    {photoData ? (
+                      <img
+                        src={photoData}
+                        alt="Captured hazard evidence"
+                        className="max-h-40 w-full rounded-card object-cover"
+                      />
+                    ) : (
+                      <span className="font-medium">Not taken</span>
+                    )}
+                  </dd>
                 </div>
               </dl>
               {error ? <div className="mt-3"><ErrorBanner message={error} /></div> : null}

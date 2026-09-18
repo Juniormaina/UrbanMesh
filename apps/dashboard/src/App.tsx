@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { ThemeProvider } from "./lib/theme";
 import { PlannerShell } from "./components/layout/PlannerShell";
 import { OverviewPage } from "./pages/OverviewPage";
 import { LiveMapPage } from "./pages/LiveMapPage";
@@ -11,6 +12,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 
 export default function App() {
   return (
+    <ThemeProvider>
     <BrowserRouter>
       <Routes>
         <Route element={<PlannerShell />}>
@@ -26,5 +28,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+    </ThemeProvider>
   );
 }
