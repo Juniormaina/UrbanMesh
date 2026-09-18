@@ -178,7 +178,12 @@ Base URL: `http://localhost:3001`
 | Method | Path | Description |
 | --- | --- | --- |
 | `POST` | `/api/v1/reports` | Ingest geotagged hazard report + run clustering |
-| `GET` | `/api/v1/reports/verified` | Verified incidents with `lat` / `lng` for the heatmap |
+| `GET` | `/api/v1/reports` | All reports (filter `status`, `category`, `limit`) |
+| `GET` | `/api/v1/reports/nearby` | Reports near `lat` / `lng` (`radius` metres) |
+| `GET` | `/api/v1/reports/verified` | Verified incidents for the heatmap |
+| `GET` | `/api/v1/reports/:id` | Evidence pack: report, nearby, cluster members |
+| `POST` | `/api/v1/reports/:id/confirm` | “I’m seeing this too” — new nearby confirmation |
+| `POST` | `/api/v1/uploads/photos` | Store a citizen photo (`{ data: data-url }`) |
 
 **POST body**
 
@@ -209,13 +214,16 @@ Base URL: `http://localhost:3001`
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `GET` | `/api/v1/dashboard/metrics` | Totals, by category, by ward, daily trend |
+| `GET` | `/api/v1/dashboard/metrics` | Totals, clusters, corridors, category, ward, trend |
+| `GET` | `/api/v1/clusters` | Verified spatial clusters with first/latest timestamps |
+| `GET` | `/api/v1/meta` | Thresholds, corridors, ward boxes |
+| `GET` | `/health` | Liveness |
 
 ### LPDP policy brief
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `POST` | `/api/v1/lpdp/generate` | Compile verified clusters → A4 PDF |
+| `POST` | `/api/v1/lpdp/generate` | Compile verified clusters → A4 PDF (`cluster_ids` optional) |
 | `GET` | `/api/v1/lpdp/latest.pdf` | Download latest brief |
 | `GET` | `/api/v1/lpdp/UrbanMesh-LPDP-Policy-Brief.pdf` | Stable filename download |
 | `GET` | `/api/v1/lpdp/info` | Path + URL metadata |
@@ -272,10 +280,10 @@ Templates: [`.env.example`](./.env.example) · [`apps/api/.env.example`](./apps/
 | `PORT` | API | Defaults to `3001` |
 | `CLUSTER_RADIUS_METERS` | API | Auto-verify radius (default `15`; **wired**; tune in roadmap Wk 6) |
 | `CLUSTER_THRESHOLD` | API | Reports needed to verify (default `3`; **wired**) |
-| `PHOTO_STORAGE_PATH` | API | Reserved for Phase 1 photo upload — **not wired yet** |
+| `PHOTO_STORAGE_PATH` | API | Photo upload directory — **wired** via `POST /api/v1/uploads/photos` |
 | `RATE_LIMIT_*` | API | Reserved for Phase 1 spam protection — **not wired yet** |
 | `LPDP_STORAGE_DIR` | API | Documented output dir; generator currently writes `./storage/lpdp` |
-| `CORS_ORIGINS` | API | Reserved allowed origins — **not applied in Express yet** |
+| `CORS_ORIGINS` | API | Allowed PWA + dashboard origins — **applied** |
 | `VITE_API_BASE` | web / dashboard | Optional absolute API origin; empty = Vite proxy |
 | `VITE_H3_RESOLUTION` | web | Client H3 resolution (default `10`) |
 

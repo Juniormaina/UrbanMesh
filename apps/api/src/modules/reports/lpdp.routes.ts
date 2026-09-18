@@ -15,9 +15,13 @@ const lpdpRouter = Router();
  */
 lpdpRouter.post(
   "/generate",
-  async (_req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const result = await generateLpdpPdf();
+      const raw = req.body?.cluster_ids;
+      const clusterIds = Array.isArray(raw)
+        ? raw.filter((id: unknown) => typeof id === "string" && id.length > 0)
+        : undefined;
+      const result = await generateLpdpPdf(clusterIds);
       res.status(201).json(result);
     } catch (err) {
       next(err);

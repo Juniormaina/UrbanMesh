@@ -25,8 +25,8 @@ Three local surfaces, one API, seed data for the demo script.
 
 | Surface | Port | What works today |
 | --- | --- | --- |
-| Citizen web (`apps/web`) | `:5173` | GPS report form, six hazard types, live H3 cell (res 10), Leaflet heat + markers for **verified** incidents |
-| County dashboard (`apps/dashboard`) | `:5174` | Totals, ward bars, category bars, verification pie, daily trend, Generate / Download LPDP PDF |
+| Citizen web (`apps/web`) | `:5173` | Mobile map home, 4-step report flow, reports list, my reports, hazard evidence |
+| County dashboard (`apps/dashboard`) | `:5174` | County console: overview, live map, clusters, analytics, LPDP evidence workspace |
 | API (`apps/api`) | `:3001` | `POST /reports` ingest + PostGIS clustering, `GET /reports/verified`, `GET /dashboard/metrics`, LPDP generate + download |
 | Database | Postgres + PostGIS | `incidents` table, six `HazardCategory` values, `is_verified` / `cluster_id` |
 | Seed | `npm run db:seed` | 53 Kilimani points; clusters A–D auto-verify; near-miss pairs E–F wait for a live third report |
@@ -48,10 +48,10 @@ Three local surfaces, one API, seed data for the demo script.
 | LPDP A4 PDF | **Shipped** | Puppeteer HTML → `storage/lpdp/UrbanMesh-LPDP-Policy-Brief.pdf` |
 | Kilimani seed + demo script | **Shipped** | Corridors: Argwings Kodhek, Dennis Pritt, Ngong Road, Kirichwa Kubwa |
 | Configurable cluster threshold | **Shipped** | Env only — not yet tuned on real density (roadmap Wk 6) |
-| CORS | **Stubbed** | `CORS_ORIGINS` is read; Express never applies it |
+| Photo upload | **Shipped** | `POST /api/v1/uploads/photos` stores images under `storage/photos`; PWA report flow attaches them |
+| CORS | **Shipped** | `CORS_ORIGINS` applied on the API |
 | Rate limiting | **Stubbed** | `RATE_LIMIT_*` env exists; no middleware |
-| Photo upload | **Stubbed** | `photo_url` column + `PHOTO_STORAGE_PATH`; no upload API or camera UI |
-| Installable PWA | **Missing** | Mobile-first Vite app; no Web App Manifest or service worker |
+| Installable PWA | **Partial** | Web App Manifest present; no service worker yet |
 | Auth / planner access control | **Missing** | Open local APIs — anyone can report or generate a PDF |
 | Moderation queue | **Missing** | Auto-verify is the only gate; no KCF review surface |
 | Health / ops endpoints | **Missing** | No `/health`; no global Express error handler |
@@ -80,12 +80,11 @@ These are the gaps that will bite first if the prototype is opened to the public
 | Risk | Why it matters |
 | --- | --- |
 | Unauthenticated ingest + PDF generation | Spam can inflate “verified” clusters; Puppeteer is expensive to invoke freely |
-| Rate-limit and CORS config unused | README / `.env.example` imply protections that are not wired |
+| Rate-limit config unused | `RATE_LIMIT_*` is documented but not enforced |
 | Cluster id re-anchored on every new match | A 4th nearby report overwrites `cluster_id` for the whole group — LPDP cluster identity is unstable |
 | H3 stored but unused for clustering | Heatmap / ingest key off lat-lng + PostGIS; H3 is an index, not the verification geometry |
 | Heatmap lag after submit | Reporter may not see their newly verified cluster until the 60 s poll |
 | Approximate wards | Dashboard “ward” bars are demo geography, not Nairobi County electoral/planning units |
-| PWA in name only | No offline, no Add to Home Screen — poor fit for a street reporter cohort |
 
 ---
 

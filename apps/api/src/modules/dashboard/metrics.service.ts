@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma.js";
 import { labelForCategory } from "../../lib/categories.js";
+import { corridorForCoordinates } from "../../lib/corridors.js";
 import { wardForCoordinates } from "../../lib/wards.js";
 
 export interface IncidentMetricRow {
@@ -18,6 +19,8 @@ export interface DashboardMetrics {
     all: number;
     verified: number;
     unverified: number;
+    clusters: number;
+    affected_areas: number;
   };
   by_category: Array<{
     category: string;
@@ -35,6 +38,12 @@ export interface DashboardMetrics {
   }>;
   trend: Array<{
     date: string;
+    total: number;
+    verified: number;
+    unverified: number;
+  }>;
+  by_corridor: Array<{
+    corridor: string;
     total: number;
     verified: number;
     unverified: number;
@@ -89,6 +98,11 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     string,
     { total: number; verified: number; unverified: number }
   >();
+  const corridorMap = new Map<
+    string,
+    { total: number; verified: number; unverified: number }
+  >();
+  const clusterIds = new Set<string>();
 
   let verified = 0;
   let unverified = 0;
@@ -125,7 +139,23 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     if (row.is_verified) d.verified += 1;
     else d.unverified += 1;
     dayMap.set(day, d);
+
+    const corridor = corridorForCoordinates(row.lat, row.lng);
+    const c = corridorMap.get(corridor) ?? {
+      total: 0,
+      verified: 0,
+      unverified: 0,
+    };
+    c.total += 1;
+    if (row.is_verified) c.verified += 1;
+    else c.unverified += 1;
+    corridorMap.set(corridor, c);
+
+    if (row.is_verified && row.cluster_id) clusterIds.add(row.cluster_id);
   }
+
+  const affectedAreas = [...wardMap.values()].filter((w) => w.verified > 0)
+    .length;
 
   return {
     generated_at: new Date().toISOString(),
@@ -133,6 +163,8 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
       all: rows.length,
       verified,
       unverified,
+      clusters: clusterIds.size,
+      affected_areas: affectedAreas,
     },
     by_category: [...categoryMap.entries()]
       .map(([category, stats]) => ({
@@ -153,6 +185,9 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     trend: [...dayMap.entries()]
       .map(([date, stats]) => ({ date, ...stats }))
       .sort((a, b) => a.date.localeCompare(b.date)),
+    by_corridor: [...corridorMap.entries()]
+      .map(([corridor, stats]) => ({ corridor, ...stats }))
+      .sort((a, b) => b.verified - a.verified || b.total - a.total),
   };
 }
 

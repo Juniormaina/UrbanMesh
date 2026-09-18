@@ -1,17 +1,20 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
+import { latLngToCell } from "h3-js";
 import {
   ingestHazardReport,
   isHazardCategory,
 } from "./ingestion.service.js";
 import { listVerifiedIncidents } from "./verified.service.js";
+import {
+  getIncidentById,
+  getIncidentEvidence,
+  listIncidents,
+  listNearbyIncidents,
+} from "./listing.service.js";
 import type { HazardReportInput } from "../../types/reports.js";
 
 const reportsRouter = Router();
 
-/**
- * GET /api/v1/reports/verified
- * Returns verified incidents with lat/lng for the citizen heatmap.
- */
 reportsRouter.get(
   "/verified",
   async (_req: Request, res: Response, next: NextFunction) => {
@@ -24,11 +27,115 @@ reportsRouter.get(
   },
 );
 
-/**
- * POST /api/v1/reports
- * Accepts a geotagged hazard report from the citizen PWA and runs
- * PostGIS 15 m same-category clustering / verification.
- */
+reportsRouter.get(
+  "/nearby",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const lat = Number(req.query.lat);
+      const lng = Number(req.query.lng);
+      const radius = Number(req.query.radius ?? 800);
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        res.status(400).json({ error: "lat and lng are required" });
+        return;
+      }
+
+      const result = await listNearbyIncidents(
+        lat,
+        lng,
+        Number.isFinite(radius) && radius > 0 ? radius : 800,
+      );
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+reportsRouter.get(
+  "/",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const statusRaw = String(req.query.status ?? "all");
+      const status =
+        statusRaw === "verified" || statusRaw === "pending" || statusRaw === "all"
+          ? statusRaw
+          : "all";
+      const category =
+        typeof req.query.category === "string" && req.query.category.length > 0
+          ? req.query.category
+          : undefined;
+      const corridor =
+        typeof req.query.corridor === "string" && req.query.corridor.length > 0
+          ? req.query.corridor
+          : undefined;
+      const limit = Number(req.query.limit ?? 500);
+
+      const result = await listIncidents({
+        status,
+        category,
+        corridor,
+        limit: Number.isFinite(limit) ? limit : 500,
+      });
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+reportsRouter.get(
+  "/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const evidence = await getIncidentEvidence(req.params.id);
+      if (!evidence) {
+        res.status(404).json({ error: "Report not found" });
+        return;
+      }
+      res.json(evidence);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+reportsRouter.post(
+  "/:id/confirm",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const original = await getIncidentById(req.params.id);
+      if (!original) {
+        res.status(404).json({ error: "Report not found" });
+        return;
+      }
+
+      const description =
+        typeof req.body?.description === "string" &&
+        req.body.description.trim().length > 0
+          ? req.body.description.trim()
+          : `Community confirmation: ${original.category_label} still present on ${original.corridor}.`;
+
+      const result = await ingestHazardReport({
+        category: original.category as HazardReportInput["category"],
+        description,
+        lat: original.lat,
+        lng: original.lng,
+        h3_index:
+          original.h3_index || latLngToCell(original.lat, original.lng, 10),
+        photo_url: null,
+      });
+
+      res.status(201).json({
+        ...result,
+        confirmed_of: original.id,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 reportsRouter.post(
   "/",
   async (req: Request, res: Response, next: NextFunction) => {

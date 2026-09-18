@@ -24,6 +24,10 @@ apps/api/prisma/*.db-journal
 apps/api/storage/lpdp/*.pdf
 !apps/api/storage/lpdp/.gitkeep
 
+# Citizen photo uploads
+apps/api/storage/photos/*
+!apps/api/storage/photos/.gitkeep
+
 # OS / editor
 .DS_Store
 Thumbs.db

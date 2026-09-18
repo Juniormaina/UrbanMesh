@@ -2,10 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   margin: 0;
-  background:
-    radial-gradient(ellipse 100% 70% at 0% 0%, #d5ebe6 0%, transparent 50%),
-    radial-gradient(ellipse 80% 50% at 100% 0%, #e7eef2 0%, transparent 45%),
-    #f7fbfc;
+  background: #f4f1ea;
+  color: #16181d;
+}
+
+.leaflet-container {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  background: #ece7de;
+  height: 100%;
+  width: 100%;
+}
+
+.leaflet-control-attribution {
+  font-size: 10px;
+  background: rgba(244, 241, 234, 0.94) !important;
 }

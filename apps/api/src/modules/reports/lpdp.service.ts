@@ -1,9 +1,10 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import puppeteer from "puppeteer";
-import { prisma } from "../../lib/prisma.js";
-import { labelForCategory } from "../../lib/categories.js";
-import { wardForCoordinates } from "../../lib/wards.js";
+import {
+  listVerifiedClusters,
+  type SpatialCluster,
+} from "../clusters/clusters.service.js";
 
 /**
  * Predictable on-disk path (run API scripts from apps/api).
@@ -15,56 +16,15 @@ export const LPDP_PDF_PATH = path.join(LPDP_STORAGE_DIR, LPDP_PDF_FILENAME);
 /** Stable public download URL served by Express. */
 export const LPDP_DOWNLOAD_URL = `/api/v1/lpdp/${LPDP_PDF_FILENAME}`;
 
-export interface LpdpCluster {
-  cluster_id: string;
-  category: string;
-  category_label: string;
-  lat: number;
-  lng: number;
-  report_count: number;
-  ward_name: string;
-  verification_status: "3+ Confirmed Citizen Reports";
-}
-
-interface ClusterRow {
-  cluster_id: string;
-  category: string;
-  lat: number;
-  lng: number;
-  report_count: number;
-}
+export type LpdpCluster = SpatialCluster;
 
 /** Load verified spatial clusters (grouped by cluster_id). */
-export async function loadVerifiedClusters(): Promise<LpdpCluster[]> {
-  const rows = await prisma.$queryRaw<ClusterRow[]>`
-    SELECT
-      cluster_id::text AS cluster_id,
-      mode() WITHIN GROUP (ORDER BY category::text) AS category,
-      AVG(ST_Y(location::geometry)) AS lat,
-      AVG(ST_X(location::geometry)) AS lng,
-      COUNT(*)::int AS report_count
-    FROM incidents
-    WHERE is_verified = true
-      AND cluster_id IS NOT NULL
-    GROUP BY cluster_id
-    HAVING COUNT(*) >= 3
-    ORDER BY COUNT(*) DESC, cluster_id
-  `;
-
-  return rows.map((row) => {
-    const lat = Number(row.lat);
-    const lng = Number(row.lng);
-    return {
-      cluster_id: row.cluster_id,
-      category: row.category,
-      category_label: labelForCategory(row.category),
-      lat,
-      lng,
-      report_count: Number(row.report_count),
-      ward_name: wardForCoordinates(lat, lng).name,
-      verification_status: "3+ Confirmed Citizen Reports" as const,
-    };
-  });
+export async function loadVerifiedClusters(
+  clusterIds?: string[],
+): Promise<LpdpCluster[]> {
+  return listVerifiedClusters(
+    clusterIds ? { ids: clusterIds } : undefined,
+  );
 }
 
 function escapeHtml(value: string): string {
@@ -97,6 +57,7 @@ export function renderLpdpHtml(clusters: LpdpCluster[]): string {
       <dl>
         <div><dt>Hazard category</dt><dd>${escapeHtml(c.category_label)}</dd></div>
         <div><dt>Coordinates</dt><dd>${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}</dd></div>
+        <div><dt>Corridor</dt><dd>${escapeHtml(c.corridor)}</dd></div>
         <div><dt>Planning area</dt><dd>${escapeHtml(c.ward_name)}</dd></div>
         <div><dt>Citizen reports</dt><dd>${c.report_count}</dd></div>
         <div><dt>Verification status</dt><dd class="status">${escapeHtml(c.verification_status)}</dd></div>
@@ -223,8 +184,10 @@ export interface LpdpGenerateResult {
  * Compile verified clusters → print HTML → A4 PDF via Puppeteer.
  * Writes to {@link LPDP_PDF_PATH}.
  */
-export async function generateLpdpPdf(): Promise<LpdpGenerateResult> {
-  const clusters = await loadVerifiedClusters();
+export async function generateLpdpPdf(
+  clusterIds?: string[],
+): Promise<LpdpGenerateResult> {
+  const clusters = await loadVerifiedClusters(clusterIds);
   const html = renderLpdpHtml(clusters);
 
   await mkdir(LPDP_STORAGE_DIR, { recursive: true });
