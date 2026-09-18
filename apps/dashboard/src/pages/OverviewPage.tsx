@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Bar,
   BarChart,
@@ -21,7 +22,7 @@ import {
   type SpatialCluster,
 } from "../lib/api";
 import { MONTH_LABEL } from "../lib/format";
-import { Panel, StatCard } from "../components/ui/Primitives";
+import { Panel, StatCard, StatusBadge } from "../components/ui/Primitives";
 import { DEFAULT_LAYERS, PlannerMap } from "../components/map/PlannerMap";
 import { useChartColors } from "../lib/theme";
 
@@ -160,6 +161,40 @@ export function OverviewPage() {
           </div>
         </Panel>
       </div>
+
+      <Panel
+        title="Recent verified clusters"
+        hint="Same-category reports within 15 m, newest activity first"
+      >
+        {clusters.length === 0 ? (
+          <p className="text-sm text-civic-muted">No verified clusters yet.</p>
+        ) : (
+          <ul className="divide-y divide-civic-mist">
+            {[...clusters]
+              .sort((a, b) => b.latest_report.localeCompare(a.latest_report))
+              .slice(0, 6)
+              .map((cluster) => (
+                <li key={cluster.cluster_id} className="flex items-center justify-between gap-3 py-3">
+                  <div>
+                    <p className="text-sm font-semibold">{cluster.category_label}</p>
+                    <p className="text-xs text-civic-muted">
+                      {cluster.corridor} · {cluster.report_count} reports · {cluster.radius_meters}m
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <StatusBadge verified />
+                    <Link
+                      to={`/clusters?id=${cluster.cluster_id}`}
+                      className="text-xs font-semibold text-civic-accent"
+                    >
+                      Open
+                    </Link>
+                  </div>
+                </li>
+              ))}
+          </ul>
+        )}
+      </Panel>
     </div>
   );
 }

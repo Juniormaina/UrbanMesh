@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { UrbanMeshLogo } from "../ui/UrbanMeshLogo";
 import { useLocationState } from "../../lib/location";
 import { ThemeToggle } from "../../lib/theme";
@@ -52,22 +52,33 @@ function TopBar() {
       {open ? (
         <div className="absolute inset-x-3 top-full z-[2001] mt-2 rounded-card border border-civic-line bg-civic-surface p-4 shadow-card">
           <p className="text-xs font-semibold uppercase tracking-wide text-civic-muted">
-            How UrbanMesh works
+            This device · Kilimani
+          </p>
+          <p className="mt-1 text-sm text-civic-slate">
+            UrbanMesh does not create reporter accounts. Reports on this phone stay on this phone.
+          </p>
+          <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-civic-muted">
+            How verification works
           </p>
           <ol className="mt-3 space-y-2 text-sm text-civic-slate">
             <li>1. A resident reports a hazard on Kilimani streets.</li>
-            <li>2. Nearby reports of the same type become evidence.</li>
+            <li>2. Nearby reports of the same type become evidence — not likes.</li>
             <li>3. Three reports within 15 m verify a spatial cluster.</li>
-            <li>4. Verified clusters feed the walkability heatmap.</li>
+            <li>4. Only verified clusters feed the walkability heatmap.</li>
             <li>5. Nairobi County uses them as LPDP planning evidence.</li>
           </ol>
-          <button
-            type="button"
-            className="mt-3 text-sm font-semibold text-civic-accent"
-            onClick={() => setOpen(false)}
-          >
-            Close
-          </button>
+          <div className="mt-3 flex gap-3">
+            <Link to="/me" className="text-sm font-semibold text-civic-accent" onClick={() => setOpen(false)}>
+              My reports
+            </Link>
+            <button
+              type="button"
+              className="text-sm font-semibold text-civic-muted"
+              onClick={() => setOpen(false)}
+            >
+              Close
+            </button>
+          </div>
         </div>
       ) : null}
     </header>

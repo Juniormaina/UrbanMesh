@@ -5,6 +5,7 @@ import {
   LPDP_DOWNLOAD_HREF,
   type SpatialCluster,
 } from "../lib/api";
+import { loadEvidenceSelection, saveEvidenceSelection } from "../lib/evidenceStore";
 import { formatCoords, MONTH_LABEL } from "../lib/format";
 import { StatCard, StatusBadge } from "../components/ui/Primitives";
 
@@ -18,7 +19,9 @@ export function EvidencePage() {
   useEffect(() => {
     void fetchClusters().then((rows) => {
       setClusters(rows);
-      setSelected(rows.map((r) => r.cluster_id));
+      const stored = loadEvidenceSelection();
+      const valid = stored?.filter((id) => rows.some((row) => row.cluster_id === id));
+      setSelected(valid && valid.length > 0 ? valid : rows.map((r) => r.cluster_id));
     });
   }, []);
 
@@ -51,9 +54,11 @@ export function EvidencePage() {
   }
 
   function toggle(id: string) {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+    setSelected((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      saveEvidenceSelection(next);
+      return next;
+    });
   }
 
   return (
@@ -71,7 +76,7 @@ export function EvidencePage() {
           disabled={generating || selected.length === 0}
           className="rounded-card bg-civic-accent px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {generating ? "Generating…" : "Generate LPDP Brief"}
+          {generating ? "Generating brief…" : "Generate LPDP Brief"}
         </button>
       </header>
 
@@ -80,6 +85,15 @@ export function EvidencePage() {
         <StatCard label="Priority corridors" value={grouped.length} />
         <StatCard label="Affected categories" value={categories} />
       </div>
+
+      {generating ? (
+        <div className="mb-4 rounded-card border border-civic-line bg-civic-mist px-4 py-3">
+          <p className="text-sm font-semibold">Compiling selected clusters into an A4 brief…</p>
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-civic-line">
+            <div className="h-full w-2/3 bg-civic-accent" />
+          </div>
+        </div>
+      ) : null}
 
       {message ? (
         <p className="mb-4 text-sm font-medium text-civic-accentDark">{message}</p>

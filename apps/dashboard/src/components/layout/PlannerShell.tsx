@@ -21,6 +21,21 @@ export function PlannerShell() {
           <p className="mt-1 text-xs font-medium text-civic-muted">
             Kilimani County Console
           </p>
+          <label className="mt-3 block">
+            <span className="sr-only">Planning area</span>
+            <select
+              defaultValue="kilimani"
+              className="w-full rounded-[10px] border border-civic-line bg-civic-paper px-2 py-1.5 text-xs font-semibold text-civic-ink"
+            >
+              <option value="kilimani">Kilimani · Nairobi City County</option>
+              <option value="westlands" disabled>
+                Westlands — later
+              </option>
+              <option value="dagoretti" disabled>
+                Dagoretti North — later
+              </option>
+            </select>
+          </label>
         </div>
         <nav className="flex flex-1 flex-col gap-0.5 p-3">
           {NAV.map((item) => (

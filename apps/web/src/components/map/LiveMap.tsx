@@ -12,6 +12,7 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.heat";
 import type { IncidentPublic } from "../../lib/api";
 import { labelForCategory } from "../../lib/categories";
+import { splitMapFeatures } from "../../lib/clusterMap";
 import { StatusBadge } from "../ui/StatusBadge";
 import { Link } from "react-router-dom";
 import { useTheme } from "../../lib/theme";
@@ -66,18 +67,18 @@ function FitOnce({ points }: { points: IncidentPublic[] }) {
   return null;
 }
 
-function FlyToUser({
-  user,
+function FlyToTarget({
+  target,
   nonce,
 }: {
-  user: { lat: number; lng: number } | null;
+  target: { lat: number; lng: number; zoom?: number } | null;
   nonce: number;
 }) {
   const map = useMap();
   useEffect(() => {
-    if (!user || nonce === 0) return;
-    map.flyTo([user.lat, user.lng], 17, { duration: 0.7 });
-  }, [map, user, nonce]);
+    if (!target || nonce === 0) return;
+    map.flyTo([target.lat, target.lng], target.zoom ?? 17, { duration: 0.7 });
+  }, [map, target, nonce]);
   return null;
 }
 
@@ -91,16 +92,25 @@ export function LiveMap({
   incidents,
   user,
   locateNonce = 0,
+  focus = null,
   className = "",
+  showVerified = true,
+  showPending = true,
 }: {
   incidents: IncidentPublic[];
   user: { lat: number; lng: number } | null;
   locateNonce?: number;
+  focus?: { lat: number; lng: number; zoom?: number } | null;
   className?: string;
+  showVerified?: boolean;
+  showPending?: boolean;
 }) {
   const { dark } = useTheme();
   const tiles = tilesFor(dark);
   const mapRef = useRef<L.Map | null>(null);
+  const features = useMemo(() => splitMapFeatures(incidents), [incidents]);
+  const flyTarget = focus ?? (locateNonce ? user : null);
+  const flyNonce = (focus ? 1000 : 0) + locateNonce;
 
   return (
     <div className={`absolute inset-0 ${className}`}>
@@ -121,40 +131,101 @@ export function LiveMap({
           url={tiles.url}
           maxZoom={19}
         />
-        <HeatLayer points={incidents} dark={dark} />
+        {showVerified ? <HeatLayer points={incidents} dark={dark} /> : null}
         <FitOnce points={incidents} />
-        <FlyToUser user={user} nonce={locateNonce} />
-        {incidents.map((inc) => (
-          <CircleMarker
-            key={inc.id}
-            center={[inc.lat, inc.lng]}
-            radius={inc.is_verified ? 8 : 5}
-            pathOptions={{
-              color: dark ? "#EEE9E1" : "#FFFFFF",
-              weight: inc.is_verified ? 2 : 1.5,
-              fillColor: markerFill(inc),
-              fillOpacity: inc.is_verified ? 0.95 : 0.8,
-              dashArray: inc.is_verified ? undefined : "3 3",
-            }}
-          >
-            <Popup>
-              <div className="min-w-[168px] space-y-1.5">
-                <p className="text-sm font-semibold">{labelForCategory(inc.category)}</p>
-                <StatusBadge verified={inc.is_verified} size="sm" />
-                <p className="text-xs text-civic-slate">{inc.corridor}</p>
-                <p className="text-[11px] text-civic-muted">
-                  {inc.nearby_count} nearby report{inc.nearby_count === 1 ? "" : "s"} · 15 m
-                </p>
-                <Link
-                  to={`/hazards/${inc.id}`}
-                  className="text-xs font-semibold text-civic-accent"
-                >
-                  View evidence
-                </Link>
-              </div>
-            </Popup>
-          </CircleMarker>
-        ))}
+        <FlyToTarget target={flyTarget} nonce={flyNonce} />
+
+        {showVerified
+          ? features.clusters.map((cluster) => (
+              <Circle
+                key={`${cluster.clusterId}-ring`}
+                center={[cluster.lat, cluster.lng]}
+                radius={15}
+                pathOptions={{
+                  color: MARKER.verified,
+                  weight: 1,
+                  fillColor: MARKER.verified,
+                  fillOpacity: dark ? 0.1 : 0.08,
+                }}
+              />
+            ))
+          : null}
+
+        {showVerified
+          ? features.clusters.map((cluster) => (
+              <CircleMarker
+                key={cluster.clusterId}
+                center={[cluster.lat, cluster.lng]}
+                radius={10}
+                pathOptions={{
+                  color: dark ? "#EEE9E1" : "#FFFFFF",
+                  weight: 2,
+                  fillColor:
+                    cluster.severity === "critical" ? MARKER.critical : MARKER.verified,
+                  fillOpacity: 0.95,
+                }}
+              >
+                <Popup>
+                  <div className="min-w-[176px] space-y-1.5">
+                    <p className="text-sm font-semibold">{cluster.category_label}</p>
+                    <StatusBadge verified size="sm" />
+                    <p className="text-xs text-civic-slate">{cluster.corridor}</p>
+                    <p className="text-[11px] text-civic-muted">
+                      {cluster.report_count} same-category reports · 15 m cluster
+                    </p>
+                    <Link
+                      to={`/hazards/${cluster.representativeId}`}
+                      className="text-xs font-semibold text-civic-accent"
+                    >
+                      View evidence
+                    </Link>
+                  </div>
+                </Popup>
+              </CircleMarker>
+            ))
+          : null}
+
+        {showVerified
+          ? features.ungroupedVerified.map((inc) => (
+              <CircleMarker
+                key={inc.id}
+                center={[inc.lat, inc.lng]}
+                radius={8}
+                pathOptions={{
+                  color: dark ? "#EEE9E1" : "#FFFFFF",
+                  weight: 2,
+                  fillColor: markerFill(inc),
+                  fillOpacity: 0.95,
+                }}
+              >
+                <Popup>
+                  <IncidentPopup incident={inc} />
+                </Popup>
+              </CircleMarker>
+            ))
+          : null}
+
+        {showPending
+          ? features.pending.map((inc) => (
+              <CircleMarker
+                key={inc.id}
+                center={[inc.lat, inc.lng]}
+                radius={5}
+                pathOptions={{
+                  color: dark ? "#EEE9E1" : "#FFFFFF",
+                  weight: 1.5,
+                  fillColor: MARKER.pending,
+                  fillOpacity: 0.8,
+                  dashArray: "3 3",
+                }}
+              >
+                <Popup>
+                  <IncidentPopup incident={inc} />
+                </Popup>
+              </CircleMarker>
+            ))
+          : null}
+
         {user ? (
           <>
             <Circle
@@ -199,6 +270,25 @@ export function LiveMap({
           −
         </button>
       </div>
+    </div>
+  );
+}
+
+function IncidentPopup({ incident }: { incident: IncidentPublic }) {
+  return (
+    <div className="min-w-[168px] space-y-1.5">
+      <p className="text-sm font-semibold">{labelForCategory(incident.category)}</p>
+      <StatusBadge verified={incident.is_verified} size="sm" />
+      <p className="text-xs text-civic-slate">{incident.corridor}</p>
+      <p className="text-[11px] text-civic-muted">
+        {incident.nearby_count} nearby report{incident.nearby_count === 1 ? "" : "s"} · 15 m
+      </p>
+      <Link
+        to={`/hazards/${incident.id}`}
+        className="text-xs font-semibold text-civic-accent"
+      >
+        View evidence
+      </Link>
     </div>
   );
 }

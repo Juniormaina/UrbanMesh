@@ -3,7 +3,13 @@ import type { IncidentPublic } from "../../lib/api";
 import { formatRelative, shortTitle } from "../../lib/format";
 import { CategoryIcon, StatusBadge } from "./StatusBadge";
 
-export function ReportCard({ incident }: { incident: IncidentPublic }) {
+export function ReportCard({
+  incident,
+  footnote,
+}: {
+  incident: IncidentPublic;
+  footnote?: string;
+}) {
   return (
     <Link
       to={`/hazards/${incident.id}`}
@@ -38,6 +44,9 @@ export function ReportCard({ incident }: { incident: IncidentPublic }) {
             {incident.nearby_count} report{incident.nearby_count === 1 ? "" : "s"}
           </span>
         </div>
+        {footnote ? (
+          <p className="mt-1 text-[11px] text-civic-muted">{footnote}</p>
+        ) : null}
       </div>
     </Link>
   );

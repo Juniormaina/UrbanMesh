@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { fetchReports, type IncidentPublic } from "../lib/api";
 import { formatWhen } from "../lib/format";
 import { StatusBadge } from "../components/ui/Primitives";
 
 export function ReportsPage() {
+  const [params] = useSearchParams();
+  const clusterFilter = params.get("cluster");
   const [items, setItems] = useState<IncidentPublic[]>([]);
   const [category, setCategory] = useState("all");
   const [status, setStatus] = useState("all");
+  const [days, setDays] = useState("all");
 
   useEffect(() => {
     void fetchReports().then(setItems);
@@ -18,9 +22,14 @@ export function ReportsPage() {
   );
 
   const filtered = items.filter((item) => {
+    if (clusterFilter && item.cluster_id !== clusterFilter) return false;
     if (category !== "all" && item.category_label !== category) return false;
     if (status === "verified" && !item.is_verified) return false;
     if (status === "pending" && item.is_verified) return false;
+    if (days !== "all") {
+      const cutoff = Date.now() - Number(days) * 24 * 60 * 60 * 1000;
+      if (new Date(item.created_at).getTime() < cutoff) return false;
+    }
     return true;
   });
 
@@ -29,8 +38,9 @@ export function ReportsPage() {
       <h1 className="text-2xl font-semibold tracking-tight">Reports</h1>
       <p className="mt-1 text-sm text-civic-muted">
         Every geotagged citizen report in the Kilimani catchments.
+        {clusterFilter ? " Showing one verified cluster’s evidence." : ""}
       </p>
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
@@ -50,6 +60,16 @@ export function ReportsPage() {
           <option value="verified">Verified</option>
           <option value="pending">Pending</option>
         </select>
+        <select
+          value={days}
+          onChange={(e) => setDays(e.target.value)}
+          className="rounded-xl border border-civic-line bg-civic-surface px-3 py-2 text-sm"
+        >
+          <option value="all">Any date</option>
+          <option value="7">Last 7 days</option>
+          <option value="30">Last 30 days</option>
+          <option value="90">Last 90 days</option>
+        </select>
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-card border border-civic-line bg-civic-surface">
@@ -65,21 +85,29 @@ export function ReportsPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((row) => (
-              <tr key={row.id} className="border-b border-civic-mist">
-                <td className="px-4 py-3">
-                  <p className="font-medium">{row.category_label}</p>
-                  <p className="text-xs text-civic-muted">{row.description}</p>
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-civic-muted">
+                  No reports match these filters.
                 </td>
-                <td className="px-4 py-3">{row.corridor}</td>
-                <td className="px-4 py-3">{row.ward_name}</td>
-                <td className="px-4 py-3">
-                  <StatusBadge verified={row.is_verified} />
-                </td>
-                <td className="px-4 py-3">{row.nearby_count}</td>
-                <td className="px-4 py-3 text-civic-muted">{formatWhen(row.created_at)}</td>
               </tr>
-            ))}
+            ) : (
+              filtered.map((row) => (
+                <tr key={row.id} className="border-b border-civic-mist">
+                  <td className="px-4 py-3">
+                    <p className="font-medium">{row.category_label}</p>
+                    <p className="text-xs text-civic-muted">{row.description}</p>
+                  </td>
+                  <td className="px-4 py-3">{row.corridor}</td>
+                  <td className="px-4 py-3">{row.ward_name}</td>
+                  <td className="px-4 py-3">
+                    <StatusBadge verified={row.is_verified} />
+                  </td>
+                  <td className="px-4 py-3">{row.nearby_count}</td>
+                  <td className="px-4 py-3 text-civic-muted">{formatWhen(row.created_at)}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   fetchClusters,
   fetchMeta,
   fetchReports,
-  generateLpdpBrief,
   type IncidentPublic,
   type PlatformMeta,
   type SpatialCluster,
 } from "../lib/api";
+import { addEvidenceCluster } from "../lib/evidenceStore";
 import { formatCoords, formatWhen } from "../lib/format";
 import { StatusBadge } from "../components/ui/Primitives";
 import {
@@ -17,6 +17,16 @@ import {
   type MapLayers,
 } from "../components/map/PlannerMap";
 
+const HAZARD_FILTERS = [
+  { value: "all", label: "All categories" },
+  { value: "MOBILITY_SURFACE_DAMAGE", label: "Road damage" },
+  { value: "NMT_PEDESTRIAN_HAZARD", label: "Blocked walkway" },
+  { value: "DRAINAGE_STORMWATER", label: "Flooding / drainage" },
+  { value: "SEWER_SANITATION", label: "Sewer / sanitation" },
+  { value: "LIGHTING_SECURITY", label: "Broken lighting" },
+  { value: "ILLEGAL_WASTE_DUMP", label: "Illegal dumping" },
+];
+
 export function LiveMapPage() {
   const [incidents, setIncidents] = useState<IncidentPublic[]>([]);
   const [clusters, setClusters] = useState<SpatialCluster[]>([]);
@@ -24,6 +34,8 @@ export function LiveMapPage() {
   const [layers, setLayers] = useState<MapLayers>(DEFAULT_LAYERS);
   const [selected, setSelected] = useState<SpatialCluster | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [category, setCategory] = useState("all");
+  const [days, setDays] = useState("all");
 
   useEffect(() => {
     void Promise.all([fetchReports(), fetchClusters(), fetchMeta()]).then(
@@ -35,6 +47,35 @@ export function LiveMapPage() {
     );
   }, []);
 
+  const cutoff =
+    days === "all" ? 0 : Date.now() - Number(days) * 24 * 60 * 60 * 1000;
+
+  const visibleIncidents = useMemo(
+    () =>
+      incidents.filter((item) => {
+        if (category !== "all" && item.category !== category) return false;
+        if (cutoff && new Date(item.created_at).getTime() < cutoff) return false;
+        return true;
+      }),
+    [incidents, category, cutoff],
+  );
+
+  const visibleClusters = useMemo(
+    () =>
+      clusters.filter((cluster) => {
+        if (category !== "all" && cluster.category !== category) return false;
+        if (cutoff && new Date(cluster.latest_report).getTime() < cutoff) {
+          return false;
+        }
+        return true;
+      }),
+    [clusters, category, cutoff],
+  );
+
+  const members = selected
+    ? visibleIncidents.filter((row) => row.cluster_id === selected.cluster_id)
+    : [];
+
   function toggle(key: keyof MapLayers) {
     setLayers((prev) => ({ ...prev, [key]: !prev[key] }));
   }
@@ -43,8 +84,8 @@ export function LiveMapPage() {
     <div className="flex h-[calc(100dvh-48px)] min-h-[640px] lg:h-dvh">
       <div className="relative min-w-0 flex-1">
         <PlannerMap
-          incidents={incidents}
-          clusters={clusters}
+          incidents={visibleIncidents}
+          clusters={visibleClusters}
           meta={meta}
           layers={layers}
           selectedId={selected?.cluster_id}
@@ -74,6 +115,33 @@ export function LiveMapPage() {
               {label}
             </label>
           ))}
+          <label className="mt-3 block text-xs font-semibold text-civic-muted">
+            Category
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="mt-1 w-full rounded-[10px] border border-civic-line bg-civic-paper px-2 py-1.5 text-sm font-medium text-civic-ink"
+            >
+              {HAZARD_FILTERS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="mt-3 block text-xs font-semibold text-civic-muted">
+            Date
+            <select
+              value={days}
+              onChange={(e) => setDays(e.target.value)}
+              className="mt-1 w-full rounded-[10px] border border-civic-line bg-civic-paper px-2 py-1.5 text-sm font-medium text-civic-ink"
+            >
+              <option value="all">Any date</option>
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+            </select>
+          </label>
         </div>
       </div>
 
@@ -97,20 +165,35 @@ export function LiveMapPage() {
               <Row label="Coordinates" value={formatCoords(selected.lat, selected.lng)} />
               <Row label="Verification" value={selected.verification_status} />
             </dl>
+            {members.length > 0 ? (
+              <div className="mt-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-civic-muted">
+                  Evidence reports
+                </p>
+                <ul className="mt-2 space-y-2">
+                  {members.map((row) => (
+                    <li key={row.id} className="rounded-[10px] border border-civic-line px-3 py-2">
+                      <p className="text-sm font-medium">{row.description}</p>
+                      <p className="text-[11px] text-civic-muted">
+                        {formatWhen(row.created_at)}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
             <div className="mt-5 flex flex-col gap-2">
               <Link
-                to="/reports"
+                to={`/reports?cluster=${selected.cluster_id}`}
                 className="rounded-card border border-civic-line py-2 text-center text-sm font-semibold"
               >
                 View reports
               </Link>
               <button
                 type="button"
-                onClick={async () => {
-                  const result = await generateLpdpBrief([selected.cluster_id]);
-                  setMessage(
-                    `Added to LPDP evidence — ${result.cluster_count} cluster compiled.`,
-                  );
+                onClick={() => {
+                  addEvidenceCluster(selected.cluster_id);
+                  setMessage("Added to LPDP evidence. Open Evidence to generate the brief.");
                 }}
                 className="rounded-card bg-civic-accent py-2 text-sm font-semibold text-white"
               >
@@ -126,7 +209,8 @@ export function LiveMapPage() {
             <h2 className="text-lg font-semibold">Geospatial workspace</h2>
             <p className="mt-2 text-sm text-civic-slate">
               Click a verified cluster on the Kilimani map to inspect report count,
-              15 m radius and planning area.
+              15 m radius and planning area. Dashed pins are pending reports, not
+              verified evidence.
             </p>
           </div>
         )}

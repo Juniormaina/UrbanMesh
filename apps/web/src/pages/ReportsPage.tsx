@@ -5,11 +5,26 @@ import {
   type IncidentPublic,
 } from "../lib/api";
 import { HAZARD_OPTIONS } from "../lib/categories";
+import { haversineMeters } from "../lib/geo";
 import { useLocationState } from "../lib/location";
 import { EmptyState, ErrorBanner, ReportCard } from "../components/ui/ReportCard";
 import { Link } from "react-router-dom";
 
 type Tab = "nearby" | "recent" | "verified";
+
+const DISTANCES = [
+  { value: 200, label: "200 m" },
+  { value: 400, label: "400 m" },
+  { value: 900, label: "900 m" },
+  { value: 1500, label: "1.5 km" },
+];
+
+const DATES = [
+  { value: "all", label: "Any date", days: 0 },
+  { value: "1", label: "Last 24 hours", days: 1 },
+  { value: "7", label: "Last 7 days", days: 7 },
+  { value: "30", label: "Last 30 days", days: 30 },
+];
 
 export function ReportsPage() {
   const { coords, requestLocation } = useLocationState();
@@ -19,6 +34,8 @@ export function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("all");
   const [status, setStatus] = useState("all");
+  const [distance, setDistance] = useState(900);
+  const [date, setDate] = useState("all");
 
   useEffect(() => {
     let cancelled = false;
@@ -31,12 +48,12 @@ export function ReportsPage() {
           if (!coords) {
             data = [];
           } else {
-            data = await fetchNearbyReports(coords.lat, coords.lng, 900);
+            data = await fetchNearbyReports(coords.lat, coords.lng, distance);
           }
         } else if (tab === "verified") {
-          data = await fetchReports({ status: "verified", limit: 80 });
+          data = await fetchReports({ status: "verified", limit: 200 });
         } else {
-          data = await fetchReports({ status: "all", limit: 80 });
+          data = await fetchReports({ status: "all", limit: 200 });
         }
         if (!cancelled) setItems(data);
       } catch (err) {
@@ -51,16 +68,25 @@ export function ReportsPage() {
     return () => {
       cancelled = true;
     };
-  }, [tab, coords]);
+  }, [tab, coords, distance]);
 
   const filtered = useMemo(() => {
+    const cutoff =
+      date === "all"
+        ? 0
+        : Date.now() - Number(date) * 24 * 60 * 60 * 1000;
     return items.filter((item) => {
       if (category !== "all" && item.category !== category) return false;
       if (status === "verified" && !item.is_verified) return false;
       if (status === "pending" && item.is_verified) return false;
+      if (cutoff && new Date(item.created_at).getTime() < cutoff) return false;
+      if (tab !== "nearby" && coords && distance) {
+        const dist = haversineMeters(coords.lat, coords.lng, item.lat, item.lng);
+        if (dist > distance) return false;
+      }
       return true;
     });
-  }, [items, category, status]);
+  }, [items, category, status, date, tab, coords, distance]);
 
   return (
     <div className="px-4 py-4 pb-8">
@@ -116,6 +142,28 @@ export function ReportsPage() {
           <option value="verified">Verified</option>
           <option value="pending">Pending</option>
         </select>
+        <select
+          value={distance}
+          onChange={(e) => setDistance(Number(e.target.value))}
+          className="rounded-xl border border-civic-line bg-civic-surface px-3 py-2 text-xs font-semibold"
+        >
+          {DISTANCES.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+        <select
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="rounded-xl border border-civic-line bg-civic-surface px-3 py-2 text-xs font-semibold"
+        >
+          {DATES.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {tab === "nearby" && !coords ? (
@@ -143,7 +191,7 @@ export function ReportsPage() {
       {!loading && filtered.length === 0 && (tab !== "nearby" || coords) ? (
         <EmptyState
           title="No reports in this view"
-          body="Try another tab or category — or log the first report on this stretch."
+          body="Try another tab, distance or date — or log the first report on this stretch."
         />
       ) : null}
 
