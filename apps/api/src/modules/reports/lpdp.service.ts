@@ -199,7 +199,7 @@ export async function generateLpdpPdf(
 
   try {
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
+    await page.setContent(html, { waitUntil: "load" });
     await page.pdf({
       path: LPDP_PDF_PATH,
       format: "A4",
