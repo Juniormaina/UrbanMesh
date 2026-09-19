@@ -1,0 +1,12 @@
+{
+  "name": "urbanmesh",
+  "private": true,
+  "description": "UrbanMesh monorepo — set Vercel Root Directory to apps/web (or use root vercel.json).",
+  "scripts": {
+    "dev:web": "npm run dev --prefix apps/web",
+    "build:web": "npm run build --prefix apps/web",
+    "dev:dashboard": "npm run dev --prefix apps/dashboard",
+    "build:dashboard": "npm run build --prefix apps/dashboard",
+    "dev:api": "npm run dev --prefix apps/api"
+  }
+}

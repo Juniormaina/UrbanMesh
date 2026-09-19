@@ -270,6 +270,23 @@ Populates **53** realistic points along Argwings Kodhek, Dennis Pritt, Ngong Roa
 
 ---
 
+## Deploy (Vercel — citizen PWA)
+
+The app lives in `apps/web`. A root [`vercel.json`](./vercel.json) builds that package and SPA-rewrites routes to `index.html`.
+
+**Project settings (recommended):**
+- **Root Directory:** `apps/web`
+- **Framework:** Vite
+- **Build Command:** `npm run build`
+- **Output Directory:** `dist`
+
+**Environment (Production):**
+- `VITE_API_BASE` — public URL of the UrbanMesh API (required for live data; without it the UI loads but reports/map fetch fail)
+
+If you previously connected the repo at the monorepo root without Root Directory, redeploy after pulling these config files (or set Root Directory to `apps/web` and redeploy).
+
+---
+
 ## Environment variables
 
 Templates: [`.env.example`](./.env.example) · [`apps/api/.env.example`](./apps/api/.env.example) · [`apps/web/.env.example`](./apps/web/.env.example) · [`apps/dashboard/.env.example`](./apps/dashboard/.env.example)
