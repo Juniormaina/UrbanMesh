@@ -8,7 +8,7 @@ Residents report mobility and infrastructure hazards in real time. When enough n
 
 Grounded in Kilimani’s scale: **~50,457 residents across 16.1 km²** (2019 census context), with pilot corridors on **Argwings Kodhek Road** and the **Kirichwa Kubwa** river corridor.
 
-Living product snapshot: **[`STATUS.md`](./STATUS.md)** · 90-day pilot plan: **[`roadmap.md`](./roadmap.md)**
+Living product snapshot: **[`STATUS.md`](./STATUS.md)** · Run locally: **[`LOCAL.md`](./LOCAL.md)** · 90-day pilot plan: **[`roadmap.md`](./roadmap.md)**
 
 ---
 
@@ -107,6 +107,7 @@ UrbanMesh/
 │   ├── web/                 # Citizen PWA (React, Vite, Leaflet, Tailwind)
 │   ├── dashboard/           # County planner console (React, Recharts)
 │   └── api/                 # Express + Prisma + PostGIS + Puppeteer
+├── LOCAL.md                 # Requirements & how to run locally
 ├── STATUS.md                # What is shipped / stubbed / missing
 ├── roadmap.md               # 90-day pilot plan
 └── README.md
@@ -158,46 +159,25 @@ Seed data includes full clusters (A–D) and near-miss pairs (E–F) so demos ca
 
 ---
 
-## Prerequisites
+## Prerequisites & local setup
+
+**Full requirements and step-by-step local run guide:** **[`LOCAL.md`](./LOCAL.md)**  
+(PostGIS / Docker, env files, `prisma db push` + seed, ports, smoke checks, common issues.)
+
+Quick checklist:
 
 - **Node.js** 20+  
 - **PostgreSQL** 14+ with the **PostGIS** extension  
 - Chromium deps for Puppeteer (LPDP PDF generation)
 
----
+### Quick start (summary)
 
-## Quick start
+1. Start PostGIS and copy `apps/api/.env.example` → `apps/api/.env`  
+2. `cd apps/api && npm install && npx prisma generate && npx prisma db push && npm run db:seed && npm run dev` → `:3001`  
+3. `cd apps/web && npm install && npm run dev` → `:5173`  
+4. `cd apps/dashboard && npm install && npm run dev` → `:5174`  
 
-### 1. Database
-
-```bash
-psql "$DATABASE_URL" -c 'CREATE EXTENSION IF NOT EXISTS postgis;'
-```
-
-Create `apps/api/.env` from `apps/api/.env.example`.
-
-### 2. API
-
-```bash
-cd apps/api
-npm install
-npx prisma generate
-npx prisma migrate dev --name init
-npm run db:seed
-npm run dev                          # http://localhost:3001
-```
-
-### 3. Citizen PWA
-
-```bash
-cd apps/web && npm install && npm run dev   # http://localhost:5173
-```
-
-### 4. County dashboard
-
-```bash
-cd apps/dashboard && npm install && npm run dev   # http://localhost:5174
-```
+Details, Docker one-liner, and troubleshooting are in [`LOCAL.md`](./LOCAL.md).
 
 ---
 
