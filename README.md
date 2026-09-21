@@ -2,23 +2,77 @@
 
 **Crowdsourced walkability & safety intelligence for Kilimani — feeding Nairobi County’s Local Physical Development Plan (LPDP).**
 
-Kilimani Urban Hackathon 2026 · Urban Mobility track · Team UrbanMesh
+Built primarily by **[Junior Maina](https://github.com/Juniormaina)** — product direction, architecture, integration, and shipping. AI coding tools (especially **Cursor**) accelerated implementation; they did not replace ownership of the problem, the spatial trust model, or the Kilimani-specific design choices.
 
-Residents report mobility and infrastructure hazards in real time. When enough nearby reports agree, the platform auto-verifies a spatial cluster, paints a live Walkability & Safety Heatmap, and compiles an LPDP policy brief for county planners.
+Residents report mobility and infrastructure hazards in real time. When enough nearby reports agree, the platform **self-verifies** a spatial cluster, paints a live Walkability & Safety Heatmap, and compiles an LPDP policy brief for county planners.
+
+Grounded in Kilimani’s scale: **~50,457 residents across 16.1 km²** (2019 census context), with pilot corridors on **Argwings Kodhek Road** and the **Kirichwa Kubwa** river corridor.
+
+Living product snapshot: **[`STATUS.md`](./STATUS.md)** · 90-day pilot plan: **[`roadmap.md`](./roadmap.md)**
 
 ---
 
-## Why it exists
+## Why it isn’t another complaint box
 
-Kilimani’s streets carry recurring hazards — unlit corridors, broken sidewalks, open sewers, drainage failures, surface damage, and illegal dumping — that rarely reach planners as structured evidence. UrbanMesh closes that gap:
+UrbanMesh is **not** an open inbox of unverified grievances. Trust is programmatic:
 
-1. **Citizens** pin hazards from a mobile-first PWA  
-2. **PostGIS + H3** cluster same-category reports within 15 m  
-3. **County dashboards** turn verified clusters into ward-level metrics and an exportable LPDP PDF  
+| Rule | Behaviour |
+| --- | --- |
+| **Self-verifying filter** | ≥ **3** same-category reports within **15 metres** (`PostGIS ST_DWithin` on geography) → `is_verified = true` + shared `cluster_id` |
+| **Heatmap gate** | Only **verified** clusters feed the walkability & safety density layer |
+| **Policy gate** | LPDP PDF entries are verified clusters labelled **“3+ Confirmed Citizen Reports”** |
+| **Scoped hazards** | Six tangible point-hazard types only — no crime logs, no water-rationing schedules, no personal profiles |
 
-Pilot corridors (see [`roadmap.md`](./roadmap.md)): **Argwings Kodhek Road** and the **Kirichwa Kubwa** river corridor.
+That triangulation of **community reports + spatial clustering + planner-facing evidence** is the product differentiator.
 
-Living snapshot of what the code does today: **[`STATUS.md`](./STATUS.md)** (hackathon MVP — demo-ready, not a street pilot).
+---
+
+## Operating constraints (Nairobi / Kilimani)
+
+| Constraint | How UrbanMesh responds |
+| --- | --- |
+| **Low bandwidth** | Mobile-first PWA; lazy-loaded map bundle; Leaflet + compact Tailwind; report shell paints before the map chunk |
+| **Privacy / security** | No public citizen profiles; reports on-device for “My Reports”; taxonomy excludes sensitive social/crime domains |
+| **Trust** | Auto-verify is a **priority signal**, not unreviewed publish — community moderation stays in the pilot plan |
+| **Planner utility** | One-click A4 LPDP policy brief from live verified clusters |
+
+---
+
+## How I built this (and how I used AI)
+
+I, **Junior Maina**, did **most of the work** on UrbanMesh end to end: framing the Kilimani / LPDP problem, choosing the three-app architecture, defining the self-verifying spatial rule, wiring PostGIS + H3, shipping the citizen PWA and county dashboard, seeding corridor data, and keeping docs honest about what is live vs stubbed.
+
+I used **AI coding tools as a force multiplier**, not as the author of the product:
+
+| What I owned | How AI tools helped |
+| --- | --- |
+| Problem framing & scope (point hazards only; privacy boundaries) | Stress-tested wording and edge cases in conversation |
+| Architecture (PWA + Express/Prisma/PostGIS + planner console) | Scaffolded folder layout and boilerplate faster |
+| Self-verify rule (15 m / ≥3, same category) | Drafted Prisma `$queryRaw` / `ST_DWithin` ingest + clustering loops I then reviewed and hardened |
+| Citizen map & report UX | Accelerated React/Leaflet/Tailwind UI and multi-step report flow |
+| LPDP PDF pipeline | Generated HTML print templates + Puppeteer render script I edited for A4 / county tone |
+| Seed realism (Argwings, Dennis Pritt, Ngong, Kirichwa) | Helped expand corridor points and near-miss pairs for demos |
+| README / STATUS / roadmap | Kept documentation aligned with the actual codebase |
+
+### Tools & workflow
+
+- **Cursor** (agent + chat): primary environment — multi-file edits, repo-aware refactors, deliverable-sized prompts  
+- **LLMs via Cursor**: TypeScript, SQL/PostGIS, React, Puppeteer, Tailwind  
+- **My loop:** specify the civic constraint → ask for a thin vertical slice → run it → fix types/spatial edge cases → commit  
+
+I deliberately worked **one deliverable at a time** (schema → ingest/cluster → PWA → dashboard/PDF → seed) so the agent stayed on rails and I stayed accountable for every merge.
+
+### Example prompt I used
+
+```text
+Using the Incident schema, build POST /api/v1/reports that inserts a
+PostGIS Point via $queryRaw, runs ST_DWithin(geography, 15m) for the
+same HazardCategory, and if count ≥ 3 flips is_verified and sets
+cluster_id to the new incident id. Return “Verified Cluster Created”
+vs “Incident Logged - Pending Verification”.
+```
+
+That class of prompt — precise, geospatial, acceptance-testable — is how the self-verifying filter and LPDP path were scaffolded. **I reviewed, corrected, and integrated the output** into the monorepo.
 
 ---
 
@@ -26,9 +80,9 @@ Living snapshot of what the code does today: **[`STATUS.md`](./STATUS.md)** (hac
 
 | Discipline | Surface | What it does |
 | --- | --- | --- |
-| **Civic design & front-end** | `apps/web` | Citizen PWA — GPS report form + live heatmap |
-| **Geospatial & spatial planning** | `apps/api` + PostGIS / H3 | Geometry ingest, 15 m clustering, verified spatial clusters |
-| **Data systems & policy automation** | `apps/dashboard` + LPDP PDF | Ward metrics (Recharts) + Puppeteer A4 policy brief |
+| **Civic design & front-end** | `apps/web` | Citizen PWA — GPS report flow + live heatmap |
+| **Geospatial & spatial planning** | `apps/api` + PostGIS / H3 | Geometry ingest, 15 m clustering, verified clusters |
+| **Data systems & policy automation** | `apps/dashboard` + LPDP PDF | Ward metrics + Puppeteer A4 policy brief |
 
 ---
 
@@ -53,16 +107,6 @@ UrbanMesh/
 │   ├── web/                 # Citizen PWA (React, Vite, Leaflet, Tailwind)
 │   ├── dashboard/           # County planner console (React, Recharts)
 │   └── api/                 # Express + Prisma + PostGIS + Puppeteer
-│       ├── prisma/
-│       │   ├── schema.prisma
-│       │   └── seed.ts      # 50+ Kilimani corridor seed points
-│       ├── scripts/
-│       │   └── generate-lpdp.ts
-│       ├── src/
-│       │   ├── modules/hazards/     # Report ingest + clustering
-│       │   ├── modules/dashboard/   # Ward / category metrics
-│       │   └── modules/reports/     # LPDP HTML → PDF
-│       └── storage/lpdp/            # Generated policy briefs
 ├── STATUS.md                # What is shipped / stubbed / missing
 ├── roadmap.md               # 90-day pilot plan
 └── README.md
@@ -84,7 +128,7 @@ UrbanMesh/
 
 ---
 
-## Hazard categories
+## Hazard categories (strict scope)
 
 | Enum | Plain-language label |
 | --- | --- |
@@ -95,20 +139,22 @@ UrbanMesh/
 | `LIGHTING_SECURITY` | Unlit Street / Broken Light |
 | `ILLEGAL_WASTE_DUMP` | Illegal Dumping / Waste Pile |
 
+Out of scope by design: crime reporting, water rationing, personal identity, anonymous doxxing surfaces.
+
 ---
 
-## Crowdsource verification
+## Crowdsource verification (self-verifying filter)
 
 On every `POST /api/v1/reports`:
 
 1. Store the report as a PostGIS `geometry(Point, 4326)`  
 2. Find same-category incidents within **15 metres** (`ST_DWithin` on geography)  
-3. If **≥ 3** reports match → set `is_verified = true` and assign a shared `cluster_id` (anchor = new report id)  
-4. Response status is either:
+3. If **≥ 3** reports match → set `is_verified = true` and assign a shared `cluster_id`  
+4. Response status:
    - `"Verified Cluster Created"`
    - `"Incident Logged - Pending Verification"`
 
-Seed data intentionally includes full clusters (A–D) and near-miss pairs (E–F) so demos can show both verified heat and a live third report flipping verification.
+Seed data includes full clusters (A–D) and near-miss pairs (E–F) so demos can show verified heat **and** a live third report flipping verification.
 
 ---
 
@@ -125,16 +171,10 @@ Seed data intentionally includes full clusters (A–D) and near-miss pairs (E–
 ### 1. Database
 
 ```bash
-# Enable PostGIS in your database
 psql "$DATABASE_URL" -c 'CREATE EXTENSION IF NOT EXISTS postgis;'
 ```
 
-Create `apps/api/.env`:
-
-```env
-DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/urbanmesh?schema=public"
-PORT=3001
-```
+Create `apps/api/.env` from `apps/api/.env.example`.
 
 ### 2. API
 
@@ -142,30 +182,22 @@ PORT=3001
 cd apps/api
 npm install
 npx prisma generate
-npx prisma migrate dev --name init   # or apply your first migration
-npm run db:seed                      # 53 Kilimani historical points
+npx prisma migrate dev --name init
+npm run db:seed
 npm run dev                          # http://localhost:3001
 ```
 
 ### 3. Citizen PWA
 
 ```bash
-cd apps/web
-npm install
-npm run dev                          # http://localhost:5173
+cd apps/web && npm install && npm run dev   # http://localhost:5173
 ```
-
-Vite proxies `/api` → `http://localhost:3001`.
 
 ### 4. County dashboard
 
 ```bash
-cd apps/dashboard
-npm install
-npm run dev                          # http://localhost:5174
+cd apps/dashboard && npm install && npm run dev   # http://localhost:5174
 ```
-
-Optional: set `VITE_API_BASE` in either frontend if the API is not on the Vite proxy host.
 
 ---
 
@@ -177,45 +209,20 @@ Base URL: `http://localhost:3001`
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `POST` | `/api/v1/reports` | Ingest geotagged hazard report + run clustering |
+| `POST` | `/api/v1/reports` | Ingest geotagged hazard + run clustering |
 | `GET` | `/api/v1/reports` | All reports (filter `status`, `category`, `limit`) |
-| `GET` | `/api/v1/reports/nearby` | Reports near `lat` / `lng` (`radius` metres) |
+| `GET` | `/api/v1/reports/nearby` | Reports near `lat` / `lng` |
 | `GET` | `/api/v1/reports/verified` | Verified incidents for the heatmap |
-| `GET` | `/api/v1/reports/:id` | Evidence pack: report, nearby, cluster members |
-| `POST` | `/api/v1/reports/:id/confirm` | “I’m seeing this too” — new nearby confirmation |
-| `POST` | `/api/v1/uploads/photos` | Store a citizen photo (`{ data: data-url }`) |
+| `GET` | `/api/v1/reports/:id` | Evidence pack |
+| `POST` | `/api/v1/reports/:id/confirm` | Nearby confirmation |
+| `POST` | `/api/v1/uploads/photos` | Store a citizen photo |
 
-**POST body**
-
-```json
-{
-  "category": "SEWER_SANITATION",
-  "description": "Open manhole near Argwings pedestrian crossing",
-  "lat": -1.2972,
-  "lng": 36.7825,
-  "h3_index": "8a2a1072b59ffff",
-  "photo_url": null
-}
-```
-
-**POST response (example)**
-
-```json
-{
-  "status": "Verified Cluster Created",
-  "incident_id": "…",
-  "cluster_id": "…",
-  "is_verified": true,
-  "nearby_count": 3
-}
-```
-
-### Dashboard
+### Dashboard & clusters
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `GET` | `/api/v1/dashboard/metrics` | Totals, clusters, corridors, category, ward, trend |
-| `GET` | `/api/v1/clusters` | Verified spatial clusters with first/latest timestamps |
+| `GET` | `/api/v1/dashboard/metrics` | Totals, corridors, category, ward, trend |
+| `GET` | `/api/v1/clusters` | Verified spatial clusters |
 | `GET` | `/api/v1/meta` | Thresholds, corridors, ward boxes |
 | `GET` | `/health` | Liveness |
 
@@ -223,110 +230,63 @@ Base URL: `http://localhost:3001`
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `POST` | `/api/v1/lpdp/generate` | Compile verified clusters → A4 PDF (`cluster_ids` optional) |
+| `POST` | `/api/v1/lpdp/generate` | Compile verified clusters → A4 PDF |
 | `GET` | `/api/v1/lpdp/latest.pdf` | Download latest brief |
-| `GET` | `/api/v1/lpdp/UrbanMesh-LPDP-Policy-Brief.pdf` | Stable filename download |
-| `GET` | `/api/v1/lpdp/info` | Path + URL metadata |
 
-**On-disk path (from `apps/api`):**
-
-```text
-storage/lpdp/UrbanMesh-LPDP-Policy-Brief.pdf
-```
-
-**CLI**
-
-```bash
-cd apps/api
-npm run generate:lpdp
-```
-
-Each PDF cluster entry includes hazard category, coordinates, planning area, report count, and verification status **“3+ Confirmed Citizen Reports”**.
+**CLI:** `cd apps/api && npm run generate:lpdp`
 
 ---
 
-## Seed data (demo)
+## Demo walkthrough (for video / stakeholders)
 
-```bash
-cd apps/api && npm run db:seed
-```
+Punchy path (aim ≤ 2–3 minutes on camera):
 
-Populates **53** realistic points along Argwings Kodhek, Dennis Pritt, Ngong Road, and Kirichwa Kubwa via raw PostGIS SQL (`$executeRaw`).
-
-| Tag | Behaviour |
-| --- | --- |
-| Clusters A–D | ≥3 same-category points within ~15 m → auto-verified on seed |
-| Near-miss E–F | Exactly 2 reports — submit one more nearby from the PWA to fire live verification |
-
----
-
-## Demo script (hackathon)
-
-1. Start API + seed + citizen web  
-2. Open the **Walkability & Safety Heatmap** — verified clusters A–D should glow  
-3. On Argwings mid-corridor, report **Blocked Walkway / Pedestrian Barrier** near the near-miss pair → expect **Verified Cluster Created**  
-4. Open the county dashboard → ward bars, category counts, verification pie, trend  
-5. Click **Generate LPDP PDF** → **Download brief**
+1. Seed API + open the **mobile PWA map**  
+2. Drop a geotagged hazard on **Argwings Kodhek** (near a near-miss pair)  
+3. Show **Verified Cluster Created** when the 15 m / ≥3 rule fires  
+4. County dashboard → **Generate LPDP PDF** → download the structured brief  
 
 ---
 
 ## Deploy (Vercel — citizen PWA)
 
-The app lives in `apps/web`. A root [`vercel.json`](./vercel.json) builds that package and SPA-rewrites routes to `index.html`.
-
-**Project settings (recommended):**
-- **Root Directory:** `apps/web`
-- **Framework:** Vite
-- **Build Command:** `npm run build`
-- **Output Directory:** `dist`
-
-**Environment (Production):**
-- `VITE_API_BASE` — public URL of the UrbanMesh API (required for live data; without it the UI loads but reports/map fetch fail)
-
-If you previously connected the repo at the monorepo root without Root Directory, redeploy after pulling these config files (or set Root Directory to `apps/web` and redeploy).
+- **Root Directory:** `apps/web` (or use root [`vercel.json`](./vercel.json))  
+- **Output:** `dist`  
+- **Env:** `VITE_API_BASE` = public API URL  
 
 ---
 
 ## Environment variables
 
-Templates: [`.env.example`](./.env.example) · [`apps/api/.env.example`](./apps/api/.env.example) · [`apps/web/.env.example`](./apps/web/.env.example) · [`apps/dashboard/.env.example`](./apps/dashboard/.env.example)
-
-| Variable | App | Description |
-| --- | --- | --- |
-| `DATABASE_URL` | API | Postgres connection string (PostGIS required) |
-| `PORT` | API | Defaults to `3001` |
-| `CLUSTER_RADIUS_METERS` | API | Auto-verify radius (default `15`; **wired**; tune in roadmap Wk 6) |
-| `CLUSTER_THRESHOLD` | API | Reports needed to verify (default `3`; **wired**) |
-| `PHOTO_STORAGE_PATH` | API | Photo upload directory — **wired** via `POST /api/v1/uploads/photos` |
-| `RATE_LIMIT_*` | API | Reserved for Phase 1 spam protection — **not wired yet** |
-| `LPDP_STORAGE_DIR` | API | Documented output dir; generator currently writes `./storage/lpdp` |
-| `CORS_ORIGINS` | API | Allowed PWA + dashboard origins — **applied** |
-| `VITE_API_BASE` | web / dashboard | Optional absolute API origin; empty = Vite proxy |
-| `VITE_H3_RESOLUTION` | web | Client H3 resolution (default `10`) |
+See [`.env.example`](./.env.example) and `apps/*/.env.example`. Key knobs: `CLUSTER_RADIUS_METERS`, `CLUSTER_THRESHOLD`, `CORS_ORIGINS`, `VITE_API_BASE`.
 
 ---
 
 ## 90-day pilot
 
-The path from hackathon MVP to a supervised street pilot (KCF hosting, reporter cohort, county LPDP desk) is documented in:
+Path from working MVP to a supervised street pilot (KCF hosting, reporter cohort, county LPDP desk):
 
-- **[`STATUS.md`](./STATUS.md)** — what is live, stubbed, or missing right now  
-- **[`roadmap.md`](./roadmap.md)** — Foundation (days 1–30) → Community pilot (31–60) → Validate & handover (61–90)
+- **[`STATUS.md`](./STATUS.md)** — what is live vs stubbed  
+- **[`roadmap.md`](./roadmap.md)** — Foundation → Community pilot → Validate & handover  
 
 ---
 
-## Team alignment
+## Roles covered
 
-| Role | Owns |
+These are the product surfaces I built and maintain:
+
+| Focus | Surface |
 | --- | --- |
-| Civic design & front-end | PWA UX, reporter orientation, public feedback loop |
+| Civic design & front-end | PWA UX, report flow, map |
 | Geospatial & spatial planning | PostGIS, H3, clustering thresholds, taxonomy |
-| Data systems & policy automation | Dashboard metrics, LPDP PDF pipeline, runbooks |
+| Data systems & policy automation | Dashboard metrics, LPDP PDF pipeline, docs |
 
 ---
 
 ## Licence & attribution
 
-Hackathon prototype for the **Kilimani Urban Hackathon 2026**. Built for community evidence and county planning workflows — not a statutory plan amendment by itself.
+**Author:** Junior Maina ([@Juniormaina](https://github.com/Juniormaina))
+
+Built for community evidence and Nairobi County planning workflows — an operational input to the Kilimani LPDP, **not** a statutory plan amendment by itself.
 
 UrbanMesh · Nairobi · Kilimani

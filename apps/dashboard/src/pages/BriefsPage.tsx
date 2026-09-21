@@ -26,8 +26,10 @@ export function BriefsPage() {
     <div className="p-5 lg:p-7">
       <h1 className="text-2xl font-semibold tracking-tight">Policy briefs</h1>
       <p className="mt-1 max-w-xl text-sm text-civic-muted">
-        Compile verified Kilimani clusters into an A4 LPDP brief for the county
-        planning desk. Latest file: {MONTH_LABEL}.
+        One-click A4 LPDP brief from{" "}
+        <span className="font-medium text-civic-ink">self-verified</span> Kilimani
+        clusters (≥3 same-category reports within 15 m) for the county planning
+        desk. Latest file: {MONTH_LABEL}.
       </p>
 
       <div className="mt-5 flex flex-wrap gap-2">

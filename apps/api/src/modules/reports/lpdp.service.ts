@@ -154,7 +154,7 @@ export function renderLpdpHtml(clusters: LpdpCluster[]): string {
     <h1>UrbanMesh LPDP Policy Brief — Kilimani Walkability &amp; Safety</h1>
     <p class="meta">
       Crowdsourced verified hazard clusters for county planning prioritisation.<br />
-      Generated ${escapeHtml(generated)} (EAT) · Urban Mobility track · Kilimani Urban Hackathon 2026
+      Generated ${escapeHtml(generated)} (EAT) · Kilimani walkability &amp; safety · Nairobi City County
     </p>
   </header>
 
