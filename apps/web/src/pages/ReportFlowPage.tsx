@@ -257,12 +257,15 @@ export function ReportFlowPage() {
                   </p>
                   <button
                     type="button"
-                    disabled={!description.trim() || !photoData}
+                    disabled={!description.trim()}
                     onClick={() => setStep(4)}
                     className="mt-5 w-full rounded-card bg-civic-accent py-3 text-sm font-semibold text-white disabled:opacity-50"
                   >
                     Review
                   </button>
+                  <p className="mt-2 text-xs text-civic-muted">
+                    Photo is recommended for stronger evidence but optional if the camera is unavailable.
+                  </p>
                 </div>
               </div>
             </section>

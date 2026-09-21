@@ -16,6 +16,10 @@ build/
 .vite/
 *.tsbuildinfo
 
+# Demo working frames (keep the exported mp4)
+demo/frames/
+demo/frames2/
+
 # Prisma
 apps/api/prisma/*.db
 apps/api/prisma/*.db-journal
